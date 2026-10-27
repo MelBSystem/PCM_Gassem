@@ -86,12 +86,12 @@ textarea.f{min-height:70px}
   <h1>PCM Gassen</h1>
   <div class="st">Manutenção · Frigorífico Gassen</div>
   <div class="box">
-    <label>Código de acesso da empresa</label><input id="lgK" class="f" autocomplete="off" autocapitalize="off" spellcheck="false"><label>Seu nome</label><input id="lgN" class="f" autocomplete="username">
-    <label>PIN</label><input id="lgP" class="f" type="password" inputmode="numeric" autocomplete="current-password">
+    <label>Usuário</label><input id="lgN" class="f" autocomplete="username" autocapitalize="off" spellcheck="false">
+    <label>Senha</label><input id="lgP" class="f" type="password" autocomplete="current-password">
     <div class="btns"><button id="lgB" class="btn p" style="width:100%;justify-content:center">Entrar</button></div>
     <div id="lgE" class="note"></div>
   </div>
-  <div class="note">O primeiro acesso precisa de internet para baixar as peças e imagens. Depois o app funciona sem sinal.</div>
+  <div class="note">O acesso é cadastrado pelo administrador. O primeiro acesso precisa de internet para baixar as peças e imagens; depois o app funciona sem sinal.</div>
 </div>
 
 <div id="vApp" hidden>
@@ -145,11 +145,21 @@ const count=st=>idb(st,'readonly',s=>new Promise(ok=>{const r=s.count();r.onsucc
 /* ---------------- API ---------------- */
 async function api(acao,extra){
   const u=S.user||{};
-  const r=await fetch(CONFIG.API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({key:u.key||CONFIG.API_KEY,acao,nome:u.nome,pin:u.pin},extra||{}))});
+  const r=await fetch(CONFIG.API_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({acao,token:u.token},extra||{}))});
   if(!r.ok) throw new Error('Servidor respondeu '+r.status);
   const j=await r.json();
-  if(!j.ok) throw new Error(j.erro||'Erro no servidor');
+  if(!j.ok){
+    const m=String(j.erro||'Erro no servidor');
+    if(m.indexOf('SESSAO:')===0 && acao!=='login'){ sessaoExpirada(m.slice(7).trim()); }
+    throw new Error(m.replace(/^SESSAO:\s*/,''));
+  }
   return j.dados;
+}
+/* sessão cancelada pelo administrador (senha trocada / usuário desativado): volta ao login, mantém a fila */
+function sessaoExpirada(msg){
+  if(S._exp) return; S._exp=true;
+  S.user=null;ls.set('pcm_user',null);
+  $('#vApp').hidden=true;$('#vLogin').hidden=false;$('#lgE').textContent=msg+(S.fila?' Seus '+S.fila+' lançamento(s) pendente(s) continuam guardados.':'');
 }
 
 /* ---------------- estado ---------------- */
@@ -243,23 +253,23 @@ addEventListener('offline',status);
 
 /* ---------------- login ---------------- */
 async function entrar(){
-  const key=$('#lgK').value.trim(),nome=$('#lgN').value.trim(),pin=$('#lgP').value.trim();
-  if(!key||!nome||!pin){$('#lgE').textContent='Preencha código de acesso, nome e PIN.';return;}
+  const nome=$('#lgN').value.trim(),pin=$('#lgP').value;
+  if(!nome||!pin){$('#lgE').textContent='Informe usuário e senha.';return;}
   $('#lgB').disabled=true;$('#lgE').textContent='Entrando…';
   try{
-    S.user={key,nome,pin};
-    const u=await api('login');
-    S.user={key,nome:u.nome,pin,perfil:u.perfil};ls.set('pcm_user',S.user);
+    const u=await api('login',{usuario:nome,senha:pin});
+    S.user={nome:u.usuario,perfil:u.perfil,token:u.token};S._exp=false;$('#lgP').value='';ls.set('pcm_user',S.user);
     $('#lgE').textContent='Baixando dados da planilha…';
     await baixaDados();ls.set('pcm_sync',Date.now());
     abreApp();
   }catch(e){S.user=null;$('#lgE').textContent=e.message.includes('Failed to fetch')?'Sem conexão com o servidor.':e.message;}
   $('#lgB').disabled=false;
 }
-$('#lgB').onclick=entrar;try{const k=new URLSearchParams(location.hash.slice(1)).get('k');if(k){$('#lgK').value=k;history.replaceState(null,'',location.pathname);}}catch(e){}$('#lgP').onkeydown=e=>{if(e.key==='Enter')entrar();};
-function sair(){if(S.fila&&!confirmar('Há lançamentos não enviados. Sair mesmo assim? Eles continuam guardados neste celular.'))return;S.user=null;ls.set('pcm_user',null);location.reload();}
+$('#lgB').onclick=entrar;$('#lgP').onkeydown=e=>{if(e.key==='Enter')entrar();};
+function sair(){if(S.fila&&!confirmar('Há lançamentos não enviados. Sair mesmo assim? Eles continuam guardados neste celular e serão enviados no próximo acesso.'))return;const t=S.user&&S.user.token;if(t&&navigator.onLine)api('sair',{token:t}).catch(()=>{});S.user=null;ls.set('pcm_user',null);setTimeout(()=>location.reload(),300);}
 function confirmar(m){return window.confirm(m);}
 function podeLancar(){return S.user&&S.user.perfil!=='consultar';}
+function ehAdmin(){return S.user&&S.user.perfil==='administrador';}
 
 /* ---------------- telas ---------------- */
 function abreApp(){$('#vLogin').hidden=true;$('#vApp').hidden=false;status();render();}
@@ -476,19 +486,52 @@ function kitsHtml(k){
 async function lMais(V){
   const k=aba('Kits');const nf=S.fila;
   const imgs=Object.keys(S.img).length;
-  V.innerHTML='<div class="box"><b>'+esc(S.user.nome)+'</b><div class="note">Perfil: '+esc(S.user.perfil)+'</div><div class="btns"><button class="btn" id="mSair">Sair</button></div></div>'+
+  V.innerHTML='<div class="box"><b>'+esc(S.user.nome)+'</b><div class="note">Perfil: '+esc(S.user.perfil)+'</div><div class="btns">'+(ehAdmin()?'<button class="btn p" id="mUsu">👤 Usuários</button>':'')+'<button class="btn" id="mSair">Sair</button></div></div>'+
     '<div class="box"><b>Dados no celular</b><div class="note">'+Object.keys(S.d.abas).map(n=>esc(n)+': '+S.d.abas[n].linhas.length).join(' · ')+'</div><div class="note">Imagens guardadas: '+imgs+'</div><div class="note">Lançamentos aguardando envio: '+nf+'</div><div class="btns"><button class="btn" id="mFila">Ver fila</button><button class="btn" id="mImg">Baixar imagens de novo</button></div></div>'+
     (k.linhas.length?'<div class="box"><b>Kits</b>'+kitsHtml(k)+'</div>':'')+
     '<div class="note" style="text-align:center;margin:16px 0">PCM Gassen · app v'+esc(CONFIG.VERSAO)+'</div>';
-  $('#mSair').onclick=sair;$('#mImg').onclick=()=>{baixaImagens(true);toast('Baixando imagens…');};
+  $('#mSair').onclick=sair;if($('#mUsu'))$('#mUsu').onclick=telaUsuarios;$('#mImg').onclick=()=>{baixaImagens(true);toast('Baixando imagens…');};
   $('#mFila').onclick=async()=>{const f=(await all('fila')).map(x=>x[1]).sort((a,b)=>a.ts-b.ts);abre('<div class="ph"><b>Fila de envio</b><button class="lnk" data-x>Fechar</button></div>'+(f.length?f.map(o=>'<div class="card" style="cursor:default"><div class="ci"><div class="cd">'+esc(o.tipo)+' · '+esc(o.aba||'imagem')+' '+esc(o.id||'')+'</div><div class="cm">'+new Date(o.ts).toLocaleString('pt-BR')+(o.erro?' · <span class="tag c">'+esc(o.erro)+'</span>':'')+'</div></div><button class="lnk" data-del="'+o.uid+'">Descartar</button></div>').join(''):'<div class="empty">Nada pendente.</div>'));
     $('#pane').querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{if(!confirmar('Descartar este lançamento? Ele não será enviado.'))return;await del('fila',b.dataset.del);S.fila=await count('fila');status();b.closest('.card').remove();});};
+}
+
+/* ---------------- usuários (só administrador) ---------------- */
+const PERFIS={administrador:'Administrador — cadastra usuários e lança',lançar:'Lançar — consulta e lança',consultar:'Consultar — só vê'};
+async function telaUsuarios(){
+  if(!navigator.onLine){toast('Cadastro de usuários precisa de internet');return;}
+  abre('<div class="ph"><b>Usuários</b><button class="lnk" data-x>Fechar</button></div><div class="empty">Carregando…</div>');
+  try{ const l=await api('usuarios'); listaUsuarios(l);}catch(e){abre('<div class="ph"><b>Usuários</b><button class="lnk" data-x>Fechar</button></div><div class="empty">'+esc(e.message)+'</div>');}
+}
+function listaUsuarios(l){
+  abre('<div class="ph"><b>Usuários ('+l.length+')</b><button class="lnk" data-x>Fechar</button></div>'+
+    '<div class="btns" style="margin-top:0"><button class="btn p" id="uNovo">+ Novo usuário</button></div><div class="list" style="margin-top:10px">'+
+    l.map(u=>'<button class="card" data-u="'+esc(u.usuario)+'"><div class="ci"><div class="cd">'+esc(u.usuario)+'</div><div class="cm">'+esc(PERFIS[u.perfil]||u.perfil)+'</div></div><div class="rt"><span class="tag '+(u.ativo?'':'c')+'">'+(u.ativo?'Ativo':'Desativado')+'</span></div></button>').join('')+'</div>'+
+    '<div class="note">Trocar a senha ou desativar um usuário desconecta na hora os celulares dele.</div>');
+  $('#uNovo').onclick=()=>formUsuario(null,l);
+  $('#pane').querySelector('.list').onclick=e=>{const c=e.target.closest('[data-u]');if(c)formUsuario(l.find(x=>x.usuario===c.dataset.u),l);};
+}
+function formUsuario(u,l){
+  const novo=!u;u=u||{usuario:'',perfil:'lançar',ativo:true};
+  abre('<div class="ph"><b>'+(novo?'Novo usuário':esc(u.usuario))+'</b><button class="lnk" id="uVolta">Voltar</button></div>'+
+    (novo?'<label>Usuário (nome de login)</label><input id="uN" class="f" autocapitalize="off" spellcheck="false" placeholder="ex.: joao">':'')+
+    '<label>'+(novo?'Senha':'Nova senha (deixe em branco para manter)')+'</label><input id="uS" class="f" type="text" autocomplete="new-password" spellcheck="false" placeholder="mínimo 4 caracteres">'+
+    '<label>Perfil</label><select id="uP" class="f">'+Object.keys(PERFIS).map(k=>'<option value="'+k+'"'+(u.perfil===k?' selected':'')+'>'+PERFIS[k]+'</option>').join('')+'</select>'+
+    (novo?'':'<label>Situação</label><select id="uA" class="f"><option value="1"'+(u.ativo?' selected':'')+'>Ativo</option><option value="0"'+(u.ativo?'':' selected')+'>Desativado</option></select>')+
+    '<div class="btns"><button class="btn p" id="uSv">Salvar</button></div><div id="uE" class="note"></div>');
+  $('#uVolta').onclick=()=>listaUsuarios(l);
+  $('#uSv').onclick=async()=>{
+    const d={usuario:novo?$('#uN').value.trim():u.usuario,senha:$('#uS').value,perfil:$('#uP').value,ativo:novo?true:$('#uA').value==='1',novo};
+    if(!d.usuario){$('#uE').textContent='Informe o usuário.';return;}
+    if(novo&&d.senha.length<4){$('#uE').textContent='A senha precisa ter pelo menos 4 caracteres.';return;}
+    $('#uSv').disabled=true;$('#uE').textContent='Salvando…';
+    try{const nl=await api('salvarUsuario',{dados:d});toast('Usuário salvo');listaUsuarios(nl);}catch(e){$('#uSv').disabled=false;$('#uE').textContent=e.message;}
+  };
 }
 
 /* ---------------- início ---------------- */
 async function inicio(){
   if('serviceWorker' in navigator){try{navigator.serviceWorker.register('sw.js');}catch(e){}}
-  if(!S.user){$('#vLogin').hidden=false;return;}
+  if(!S.user||!S.user.token){S.user=null;$('#vLogin').hidden=false;S.fila=await count('fila');return;}
   S.d=await get('kv','dados');
   if(S.d) marcaLinhas(S.d);
   for(const [k,b] of await all('img')) if(!k.startsWith('vista_')) S.img[k]=b;
