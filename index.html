@@ -232,7 +232,7 @@ function nomeTela(t){return cfg('aba:'+t)||TIT[t];}
 function rot(c){return cfg('campo:'+String(c).trim())||c;}
 function isAdm(){return !!(S.user&&S.user.perfil==='administrador');}
 function aplicaNomes(){document.querySelectorAll('.nb').forEach(b=>{const n=b.querySelector('.nl');if(n)n.textContent=cfg('aba:'+b.dataset.t)||NAVROT[b.dataset.t];});}
-function aplicaRotulos(root){if(!root)return;root.querySelectorAll('label,.kv>b,th,.rot').forEach(el=>{const o=el.dataset.o||(el.dataset.o=el.textContent.trim());const n=cfg('campo:'+o);el.textContent=n||o;});}
+function aplicaRotulos(root){if(!root)return;root.querySelectorAll('label,.kv>b,th,.rot').forEach(el=>{if(el.children.length)return;const o=el.dataset.o||(el.dataset.o=el.textContent.trim());const n=cfg('campo:'+o);el.textContent=n||o;});}
 function col(cab,...nomes){for(const n of nomes){const k=norm(n);let i=cab.findIndex(c=>norm(c)===k);if(i<0)i=cab.findIndex(c=>norm(c).startsWith(k));if(i<0)i=cab.findIndex(c=>norm(c).includes(k));if(i>=0)return i;}return -1;}
 function obj(a,r){const o={};a.cab.forEach((c,i)=>o[c]=r[i]);return o;}
 function v(a,r,...n){const i=col(a.cab,...n);return i>=0?r[i]:'';}
@@ -433,7 +433,8 @@ function detPeca(nAba,id){
     '<div class="btns"><button class="btn p" id="eSv">Salvar</button></div>':'')+
     '<div class="btns">'+(link?'<a class="btn" target="_blank" rel="noopener" href="'+esc(link)+'">Comprar'+(loja?' na '+esc(loja):'')+' ↗</a>':'<a class="btn" target="_blank" rel="noopener" href="'+busc+'">Buscar preço ↗</a>')+
     (podeLancar()?'<button class="btn" id="eLc">+ Lista de compras</button>':'')+
-    (serra?'<button class="btn" id="eVs">Vistas explodidas</button>':'')+'</div>');
+    (serra?'<button class="btn" id="eVs">Vistas explodidas</button>':'')+(isAdm()&&podeLancar()?'<button class="btn" id="eEd">✏️ Editar item</button>':'')+'</div>');
+  if(isAdm()&&podeLancar())$('#eEd').onclick=()=>editarLinha(nAba,r,{id},id,()=>detPeca(nAba,id));
   if(podeLancar()){
     const q=()=>Math.max(1,num($('#sq').value)||1);
     $('#sm').onclick=()=>$('#sq').value=Math.max(1,q()-1);$('#sp').onclick=()=>$('#sq').value=q()+1;
@@ -444,6 +445,25 @@ function detPeca(nAba,id){
     $('#fi').onchange=ev=>{const f=ev.target.files[0];if(!f)return;reduz(f).then(b64=>enfileira({tipo:'imagem',id,b64,imgKey:ik||id}).then(()=>{if(!serra&&S.d.imgApp.indexOf(id)<0)S.d.imgApp.push(id);toast('Imagem salva');detPeca(nAba,id);renderLista();})).catch(e=>toast(e.message));};
   }
   const vs=$('#eVs');if(vs)vs.onclick=()=>listaVistas(v(a,r,'Aba origem'));
+}
+/* editar qualquer campo de um item (administrador). Fórmulas da planilha nunca são sobrescritas. */
+const ED_FORA=/^(id|imagem id|precisao da imagem|estoque atual|comprar)$/;
+function editarLinha(nAba,r,opBase,titulo,depois){
+  const a=aba(nAba);
+  const cols=a.cab.map((c,i)=>[c,i]).filter(([c])=>c&&!ED_FORA.test(norm(c)));
+  const iD=col(a.cab,'Descrição');
+  cols.sort((x,y)=>(x[1]===iD?-1:0)-(y[1]===iD?-1:0));
+  const longo=c=>/descri|observ|obs\b|tarefa|item de verif|defeito|acao|ação/i.test(c);
+  abre('<div class="ph"><b>Editar '+esc(titulo)+'</b><button class="lnk" data-x>Fechar</button></div>'+
+    cols.map(([c,i])=>'<label>'+esc(c)+'</label>'+(longo(c)?'<textarea class="f" data-i="'+i+'">'+esc(r[i])+'</textarea>':'<input class="f" data-i="'+i+'" value="'+esc(r[i])+'">')).join('')+
+    '<div class="btns" style="position:sticky;bottom:0;background:var(--sf);padding:8px 0"><button class="btn p" id="edS">Salvar alterações</button></div><div class="note">Campos calculados pela planilha (fórmulas) não são alterados.</div>');
+  $('#edS').onclick=async()=>{
+    const campos={};$('#pane').querySelectorAll('[data-i]').forEach(el=>{const i=+el.dataset.i;const nv=el.value.trim();if(nv!==String(r[i]==null?'':r[i]).trim())campos[a.cab[i]]=nv;});
+    if(!Object.keys(campos).length){toast('Nada alterado');fecha();return;}
+    if(iD>=0&&a.cab[iD] in campos&&!campos[a.cab[iD]]){toast('A descrição não pode ficar vazia');return;}
+    await enfileira(Object.assign({},opBase,{tipo:'atualizar',aba:nAba,campos}));
+    toast(Object.keys(campos).length+' campo(s) atualizado(s)');fecha();renderLista();if(depois)depois();
+  };
 }
 function reduz(file){return new Promise((ok,ko)=>{const fr=new FileReader();fr.onerror=()=>ko(new Error('Não consegui ler a foto'));fr.onload=()=>{const im=new Image();im.onerror=()=>ko(new Error('Formato não suportado'));im.onload=()=>{let w=520,q=.78;for(let i=0;i<10;i++){const s=Math.min(1,w/im.width);const c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);const o=c.toDataURL('image/jpeg',q).split(',')[1];if(o.length<45000)return ok(o);w*=.82;q=Math.max(.5,q-.05);}ko(new Error('Foto grande demais'));};im.src=fr.result;};fr.readAsDataURL(file);});}
 
@@ -664,6 +684,8 @@ function detCompra(i){
   const a=aba('Compras');const r=a.linhas[i];if(!r)return;const link=v(a,r,'Link');
   abre('<div class="ph"><b>Compra</b><button class="lnk" data-x>Fechar</button></div><div class="kv">'+a.cab.map((c,j)=>r[j]!==''?'<b>'+esc(c)+'</b><span>'+esc(r[j])+'</span>':'').join('')+'</div>'+
     (podeLancar()?'<label>Status</label><select id="cS" class="f">'+['A pedir','Pedido','Recebido','Cancelado'].map(s=>'<option'+(s===v(a,r,'Status')?' selected':'')+'>'+s+'</option>').join('')+'</select><div class="btns"><button class="btn p" id="cSv">Salvar</button>'+(link?'<a class="btn" target="_blank" rel="noopener" href="'+esc(link)+'">Abrir loja ↗</a>':'')+'</div><div class="note">Ao marcar Recebido, a quantidade entra no estoque da peça.</div>':(link?'<a class="btn" target="_blank" rel="noopener" href="'+esc(link)+'">Abrir loja ↗</a>':'')));
+  if(isAdm()&&podeLancar()){const bx=document.createElement('button');bx.className='btn';bx.textContent='✏️ Editar item';$('#pane .btns').appendChild(bx);
+    bx.onclick=()=>{const conferir={};const ip=col(a.cab,'ID peça','ID');const ic=col(a.cab,'Código');if(ip>=0)conferir[a.cab[ip]]=r[ip];if(ic>=0)conferir[a.cab[ic]]=r[ic];editarLinha('Compras',r,{linha:aCompraLinha(i),idx:i,conferir},'compra');};}
   if(podeLancar())$('#cSv').onclick=async()=>{
     const novo=$('#cS').value,ant=v(a,r,'Status');
     const conferir={};const ip=col(a.cab,'ID peça','ID');const ic=col(a.cab,'Código');if(ip>=0)conferir[a.cab[ip]]=r[ip];if(ic>=0)conferir[a.cab[ic]]=r[ic];
