@@ -30,7 +30,13 @@ h1{font-size:18px;margin:0}
 .q{width:100%;margin-top:8px;padding:10px 12px;border:1px solid var(--ln);border-radius:var(--r);background:var(--sf);font-size:16px}
 .chips{display:flex;gap:6px;overflow-x:auto;padding:8px 0 2px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
-@media (hover:hover) and (pointer:fine){.chips{flex-wrap:wrap;overflow-x:visible;row-gap:6px}}
+.chipw{position:relative}
+.chips{scroll-behavior:smooth;cursor:grab;user-select:none;-webkit-user-select:none}
+.chips.arr{cursor:grabbing;scroll-behavior:auto}
+.chs{position:absolute;top:8px;bottom:2px;width:46px;border:0;padding:0 6px;z-index:2;cursor:pointer;font-size:30px;line-height:1;font-weight:700;color:var(--ac);display:flex;align-items:center}
+.chs.l{left:0;justify-content:flex-start;background:linear-gradient(90deg,var(--bg) 55%,transparent)}
+.chs.r{right:0;justify-content:flex-end;background:linear-gradient(270deg,var(--bg) 55%,transparent)}
+.chs[hidden]{display:none}
 .chip{flex:none;border:1px solid var(--ln);background:var(--sf);border-radius:999px;padding:5px 11px;font-size:13px;cursor:pointer;white-space:nowrap}
 .chip[aria-pressed=true]{background:var(--ac);border-color:var(--ac);color:#fff}
 main.wrap{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
@@ -377,8 +383,24 @@ function chips(){
   $('#chips').hidden=!c.length;
   const edF=isAdm()&&podeLancar()&&c.length&&['pecas','serras','manut','check'].includes(S.tab);
   $('#chips').innerHTML=['<button class="chip" data-c="" aria-pressed="'+(!S.chip)+'">Todos</button>'].concat(c.map(x=>'<button class="chip" data-c="'+esc(x)+'" aria-pressed="'+(S.chip===x)+'">'+esc(nomeFiltro(x))+'</button>')).join('')+(edF?'<button class="chip" id="chEd" title="Renomear filtros">✏️ Renomear</button>':'');
-  if(!chips.w){chips.w=1;const ce=$('#chips');ce.addEventListener('wheel',e=>{if(ce.scrollWidth>ce.clientWidth&&Math.abs(e.deltaY)>Math.abs(e.deltaX)){ce.scrollLeft+=e.deltaY;e.preventDefault();}},{passive:false});}
+  ligaChips();setas();
   $('#chips').onclick=e=>{if(e.target.closest('#chEd')){formFiltros(c);return;}const b=e.target.closest('.chip');if(!b)return;S.chip=b.dataset.c;S.lim=40;chips();renderLista();};
+}
+/* barra de filtros: setas, arrastar com o mouse e roda do mouse */
+function setas(){const ce=$('#chips');const w=ce&&ce.parentNode;if(!w||!w.classList.contains('chipw'))return;const l=w.querySelector('.chs.l'),r=w.querySelector('.chs.r');const sobra=ce.scrollWidth-ce.clientWidth;const vis=!ce.hidden&&sobra>4;l.hidden=!vis||ce.scrollLeft<=4;r.hidden=!vis||ce.scrollLeft>=sobra-4;}
+function ligaChips(){
+  const ce=$('#chips');if(!ce||ce.dataset.lig)return;ce.dataset.lig=1;
+  const w=document.createElement('div');w.className='chipw';ce.parentNode.insertBefore(w,ce);w.appendChild(ce);
+  const mk=(c,t,d)=>{const b=document.createElement('button');b.className='chs '+c;b.type='button';b.textContent=t;b.setAttribute('aria-label',d>0?'Mais filtros à direita':'Mais filtros à esquerda');b.hidden=true;b.onclick=e=>{e.stopPropagation();ce.scrollBy({left:d*Math.max(160,ce.clientWidth*0.7),behavior:'smooth'});};w.appendChild(b);};
+  mk('l','‹',-1);mk('r','›',1);
+  ce.addEventListener('scroll',setas,{passive:true});addEventListener('resize',setas);
+  ce.addEventListener('wheel',e=>{if(ce.scrollWidth>ce.clientWidth&&Math.abs(e.deltaY)>Math.abs(e.deltaX)){ce.scrollLeft+=e.deltaY;e.preventDefault();}},{passive:false});
+  let x0=0,s0=0,ativo=false,moveu=false;
+  ce.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'||e.button!==0)return;ativo=true;moveu=false;x0=e.clientX;s0=ce.scrollLeft;});
+  addEventListener('pointermove',e=>{if(!ativo)return;const dx=e.clientX-x0;if(!moveu&&Math.abs(dx)>5){moveu=true;ce.classList.add('arr');}if(moveu){ce.scrollLeft=s0-dx;e.preventDefault();}});
+  addEventListener('pointerup',()=>{if(!ativo)return;ativo=false;ce.classList.remove('arr');if(moveu)setTimeout(()=>moveu=false,0);});
+  ce.addEventListener('click',e=>{if(moveu){e.stopPropagation();e.preventDefault();moveu=false;}},true);
+  ce.addEventListener('dragstart',e=>e.preventDefault());
 }
 const busca=(txt)=>!S.q||norm(txt).includes(S.q);
 function imgDe(id){return S.img[id];}
