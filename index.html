@@ -99,6 +99,24 @@ textarea.f{min-height:70px}
 .sum b{display:block;font-size:20px}
 .sum span{font-size:11px;color:var(--mu)}
 .stick{background:var(--bg);padding:10px 0 4px;margin-top:6px}
+/* manutenção por equipamento */
+.gh{display:flex;align-items:center;gap:8px;background:var(--sf);border:1px solid var(--ln);border-radius:var(--r);padding:10px 12px;margin:12px 0 6px;cursor:pointer}
+.gh .car{width:14px;color:var(--mu);transition:transform .15s}
+.gh.fe .car{transform:rotate(-90deg)}
+.gh .gn{font-weight:700;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gh .gc{font-size:12px;color:var(--mu);white-space:nowrap}
+.gh .ga{display:flex;gap:2px}
+.gh .ga button{border:1px solid var(--ln);background:var(--bg);border-radius:8px;width:30px;height:30px;cursor:pointer;font-size:13px;padding:0}
+.gb{display:grid;gap:8px;padding-left:8px;border-left:2px solid var(--ln);margin-left:6px}
+.gb .grp{margin:8px 2px 2px}
+.card .sel{flex:none;width:22px;height:22px;margin-top:2px;accent-color:var(--ac)}
+.selbar{position:fixed;left:0;right:0;bottom:calc(58px + env(safe-area-inset-bottom));z-index:22;background:var(--sf);border-top:1px solid var(--ln);padding:8px 12px;box-shadow:0 -4px 14px rgba(0,0,0,.12)}
+.selbar .wrap{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.selbar .btn{padding:8px 10px;font-size:13px}
+.rn{display:grid;grid-template-columns:1fr 1fr;gap:6px;align-items:center;margin:6px 0}
+.rn span{font-size:13px;overflow:hidden;text-overflow:ellipsis}
+.rn input{padding:8px;font-size:15px}
+.nb .nl{max-width:100%;overflow:hidden;text-overflow:ellipsis}
 #print{display:none}
 @media print{
   body{background:#fff!important;color:#000!important}
@@ -142,13 +160,13 @@ textarea.f{min-height:70px}
 <main class="wrap"><div id="view"></div></main>
 <button id="fab" class="fab" hidden></button>
 <nav class="tabs"><div class="wrap">
-  <button class="nb" data-t="pecas"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg>Peças</button>
-  <button class="nb" data-t="serras"><svg viewBox="0 0 24 24"><path d="M3 17l9-9 3 3-9 9H3z"/><path d="M14 6l2-2 4 4-2 2"/></svg>Serras</button>
-  <button class="nb" data-t="manut"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg>Manut.</button>
-  <button class="nb" data-t="check"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12l2 2 4-4M9 17h6"/></svg>Checklist</button>
-  <button class="nb" data-t="led"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 3z"/></svg>LED</button>
-  <button class="nb" data-t="compras"><svg viewBox="0 0 24 24"><path d="M3 4h2l2.4 11h11l2-8H6.2"/><circle cx="9" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/></svg>Compras</button>
-  <button class="nb" data-t="mais"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><path d="M16.5 13v7M13 16.5h7"/></svg>Mais</button>
+  <button class="nb" data-t="pecas"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg><span class="nl">Peças</span></button>
+  <button class="nb" data-t="serras"><svg viewBox="0 0 24 24"><path d="M3 17l9-9 3 3-9 9H3z"/><path d="M14 6l2-2 4 4-2 2"/></svg><span class="nl">Serras</span></button>
+  <button class="nb" data-t="manut"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg><span class="nl">Manut.</span></button>
+  <button class="nb" data-t="check"><svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4h6v3H9zM9 12l2 2 4-4M9 17h6"/></svg><span class="nl">Checklist</span></button>
+  <button class="nb" data-t="led"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 3z"/></svg><span class="nl">LED</span></button>
+  <button class="nb" data-t="compras"><svg viewBox="0 0 24 24"><path d="M3 4h2l2.4 11h11l2-8H6.2"/><circle cx="9" cy="19.5" r="1.3"/><circle cx="17" cy="19.5" r="1.3"/></svg><span class="nl">Compras</span></button>
+  <button class="nb" data-t="mais"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><path d="M16.5 13v7M13 16.5h7"/></svg><span class="nl">Mais</span></button>
 </div></nav>
 </div>
 
@@ -205,6 +223,15 @@ const S={user:ls.get('pcm_user'),d:null,tab:'pecas',q:'',chip:'',lim:40,img:{},f
 const TIT={pecas:'Peças',serras:'Serras',manut:'Manutenção',hist:'Histórico',compras:'Compras',mais:'Mais',check:'Checklist diário',led:'Refletores LED'};
 
 function aba(n){return (S.d&&S.d.abas&&S.d.abas[n])||{cab:[],linhas:[]};}
+/* ---- nomes personalizados (aba "Config app", só o administrador altera) ---- */
+const NAVROT={pecas:'Peças',serras:'Serras',manut:'Manut.',check:'Checklist',led:'LED',compras:'Compras',mais:'Mais'};
+const CFG_AB='Config app';
+function cfg(k){const a=aba(CFG_AB);const r=a.linhas.find(x=>String(x[0])===k);return r?String(r[1]||''):'';}
+function nomeTela(t){return cfg('aba:'+t)||TIT[t];}
+function rot(c){return cfg('campo:'+String(c).trim())||c;}
+function isAdm(){return !!(S.user&&S.user.perfil==='administrador');}
+function aplicaNomes(){document.querySelectorAll('.nb').forEach(b=>{const n=b.querySelector('.nl');if(n)n.textContent=cfg('aba:'+b.dataset.t)||NAVROT[b.dataset.t];});}
+function aplicaRotulos(root){if(!root)return;root.querySelectorAll('label,.kv>b,th,.rot').forEach(el=>{const o=el.dataset.o||(el.dataset.o=el.textContent.trim());const n=cfg('campo:'+o);el.textContent=n||o;});}
 function col(cab,...nomes){for(const n of nomes){const k=norm(n);let i=cab.findIndex(c=>norm(c)===k);if(i<0)i=cab.findIndex(c=>norm(c).startsWith(k));if(i<0)i=cab.findIndex(c=>norm(c).includes(k));if(i>=0)return i;}return -1;}
 function obj(a,r){const o={};a.cab.forEach((c,i)=>o[c]=r[i]);return o;}
 function v(a,r,...n){const i=col(a.cab,...n);return i>=0?r[i]:'';}
@@ -213,7 +240,10 @@ function num(x){const n=parseFloat(String(x).replace(/\./g,'').replace(',','.'))
 /* aplica a op no snapshot local (para o app refletir na hora, mesmo off-line) */
 function aplicaLocal(op){
   if(op.tipo==='imagem'){S.img[op.imgKey]=op.b64;put('img',op.imgKey,op.b64);return;}
+  if(op.tipo==='config'){if(!S.d.abas[CFG_AB])S.d.abas[CFG_AB]={cab:['Chave','Valor','Alterado por / em'],linhas:[]};const c=S.d.abas[CFG_AB];const i=c.linhas.findIndex(x=>String(x[0])===op.chave);if(op.valor===''||op.valor==null){if(i>=0)c.linhas.splice(i,1);}else if(i>=0)c.linhas[i][1]=op.valor;else c.linhas.push([op.chave,op.valor,'']);return;}
   const a=aba(op.aba); if(!a.cab.length) return;
+  if(op.tipo==='excluir'){const i=a.linhas.findIndex(x=>String(x[0])===String(op.id));if(i>=0)a.linhas.splice(i,1);return;}
+  if(op.tipo==='renomearValor'){const c=col(a.cab,op.coluna);if(c<0)return;a.linhas.forEach(r=>{if(String(r[c])===String(op.de))r[c]=op.para;});return;}
   if(op.tipo==='incluirLote'){(op.linhas||[]).forEach(c=>{const r=a.cab.map(()=>'');Object.keys(c).forEach(k=>{const i=col(a.cab,k);if(i>=0)r[i]=c[k];});a.linhas.push(r);});return;}
   if(op.tipo==='incluir'){const r=a.cab.map(()=>'');Object.keys(op.campos).forEach(k=>{const i=col(a.cab,k);if(i>=0)r[i]=op.campos[k];});if(!r[0])r[0]=op.campos.ID||'(novo)';a.linhas.push(r);return;}
   const r=op.idx!=null?a.linhas[op.idx]:a.linhas.find(x=>String(x[0])===String(op.id));
@@ -250,6 +280,7 @@ async function sincroniza(baixar){
 async function baixaDados(){
   const d=await api('dados');
   marcaLinhas(d);
+  if(d.perfil&&S.user&&S.user.perfil!==d.perfil){S.user.perfil=d.perfil;ls.set('pcm_user',S.user);}
   // reaplica o que ainda está na fila (lançamentos que deram erro ou chegaram depois)
   S.d=d; for(const [,op] of await all('fila')) aplicaLocal(op);
   await put('kv','dados',S.d);
@@ -312,21 +343,21 @@ function podeLancar(){return S.user&&S.user.perfil!=='consultar';}
 
 /* ---------------- telas ---------------- */
 function abreApp(){$('#vLogin').hidden=true;$('#vApp').hidden=false;status();render();}
-document.querySelector('nav.tabs').onclick=e=>{const b=e.target.closest('.nb');if(!b)return;if(b.dataset.t!==S.tab&&b.dataset.t==='check'&&!S.ck)S.ckModo='fazer';S.tab=b.dataset.t;S.q='';S.chip='';S.lim=40;$('#q').value='';scrollTo(0,0);render();};
+document.querySelector('nav.tabs').onclick=e=>{const b=e.target.closest('.nb');if(!b)return;if(b.dataset.t!==S.tab&&b.dataset.t==='check'&&!S.ck)S.ckModo='fazer';S.mSel=null;S.tab=b.dataset.t;S.q='';S.chip='';S.lim=40;$('#q').value='';scrollTo(0,0);render();};
 $('#q').oninput=e=>{S.q=norm(e.target.value);S.lim=40;clearTimeout(render.t);render.t=setTimeout(renderLista,150);};
 $('#syncB').onclick=()=>sincroniza(true);
 $('#sheet').onclick=e=>{if(e.target.id==='sheet')fecha();};
 function fecha(){$('#sheet').hidden=true;}
-function abre(h){$('#pane').innerHTML=h;$('#sheet').hidden=false;$('#pane').scrollTop=0;const f=$('#pane [data-x]');if(f)f.onclick=fecha;}
+function abre(h){$('#pane').innerHTML=h;aplicaRotulos($('#pane'));$('#sheet').hidden=false;$('#pane').scrollTop=0;const f=$('#pane [data-x]');if(f)f.onclick=fecha;}
 
 function render(){
   document.querySelectorAll('.nb').forEach(b=>b.setAttribute('aria-current',b.dataset.t===S.tab?'page':'false'));
-  $('#ttl').textContent=TIT[S.tab];
+  $('#ttl').textContent=nomeTela(S.tab);aplicaNomes();
   $('#q').hidden=S.tab==='mais';
   const fab=$('#fab');
-  const fl={hist:'+ Registro',compras:'+ Item',check:S.ckModo==='itens'?'+ Item':'',led:'+ Troca'}[S.tab];
+  const fl={hist:'+ Registro',compras:'+ Item',check:S.ckModo==='itens'?'+ Item':'',led:'+ Troca',manut:isAdm()&&!S.mSel?'+ Tarefa':''}[S.tab];
   fab.hidden=!(fl&&podeLancar());fab.textContent=fl||'';
-  fab.onclick=S.tab==='hist'?()=>formHist():S.tab==='compras'?()=>formCompra():S.tab==='check'?()=>formCkItem():S.tab==='led'?()=>formLed():null;
+  fab.onclick=S.tab==='hist'?()=>formHist():S.tab==='compras'?()=>formCompra():S.tab==='check'?()=>formCkItem():S.tab==='led'?()=>formLed():S.tab==='manut'?()=>formTarefa():null;
   chips();renderLista();
 }
 function chips(){
@@ -350,8 +381,9 @@ function ligaMais(){const m=$('#mais');if(m)m.onclick=()=>{S.lim+=40;renderLista
 function renderLista(){
   const V=$('#view');
   if(!S.d){V.innerHTML='<div class="empty">Sem dados. Toque em ↻ Sincronizar com internet.</div>';return;}
+  V.onclick=null;const sb=$('#selbar');if(sb&&!(S.tab==='manut'&&S.mSel))sb.remove();
   ({pecas:lPecas,serras:lSerras,manut:lManut,hist:lHist,compras:lCompras,mais:lMais,check:lCheck,led:lLed})[S.tab](V);
-  ligaMais();
+  aplicaRotulos(V);ligaMais();
 }
 
 /* ---- Peças (aba Peças) ---- */
@@ -427,25 +459,162 @@ $('#zx').onclick=()=>{$('#zoom').hidden=true;};
 
 /* ---- Manutenção ---- */
 function stTarefa(a,r){const s=norm(v(a,r,'Status'));if(s.includes('atras'))return['Atrasada','c'];if(s.includes('vence'))return['Vence','w'];if(s.includes('dia'))return['Em dia',''];return[v(a,r,'Status')||'—','w'];}
+/* ---- Manutenção agrupada por equipamento ---- */
+const MN='Manutenção';
+const TIPO_ORD=['Mecânica','Lubrificação','Elétrica','Operacional'];
+const SEM_EQ='(sem equipamento)';
+function hdr(a,...n){const i=col(a.cab,...n);return i>=0?a.cab[i]:n[0];}
+function ordemEq(){try{const o=JSON.parse(cfg('ordem:'+MN)||'[]');return Array.isArray(o)?o:[];}catch(e){return [];}}
+function eqsManut(){const a=aba(MN);const set=[];a.linhas.forEach(r=>{const e=v(a,r,'Equipamento')||SEM_EQ;if(set.indexOf(e)<0)set.push(e);});const o=ordemEq();return set.sort((x,y)=>{const i=o.indexOf(x),j=o.indexOf(y);return ((i<0?1e4:i)-(j<0?1e4:j))||x.localeCompare(y,'pt');});}
+function todosEquip(){const L=[[MN,'Equipamento'],['Peças','Equipamento'],['manuais_pecas','Equipamento'],[CK_AB,'Equipamento']];const set=new Set();L.forEach(([n,c])=>{const a=aba(n);a.linhas.forEach(r=>{const e=v(a,r,c);if(e)set.add(e);});});return [...set].sort((x,y)=>x.localeCompare(y,'pt'));}
+function fechados(){return new Set(ls.get('pcm_mfech')||[]);}
+function setFechados(f){ls.set('pcm_mfech',[...f]);}
+function proxIdMN(extra){const a=aba(MN);let m=0;a.linhas.forEach(r=>{const x=String(r[0]).match(/^MP(\d+)$/);if(x)m=Math.max(m,+x[1]);});return 'MP'+String(m+1+(extra||0)).padStart(3,'0');}
 function lManut(V){
-  const a=aba('Manutenção');
+  const a=aba(MN);
   const L=a.linhas.filter(r=>{const st=stTarefa(a,r)[0];if(S.chip&&['Atrasada','Vence','Em dia'].includes(S.chip)){if(st!==S.chip)return false;}else if(S.chip&&v(a,r,'Área','Tipo')!==S.chip)return false;return busca(r.join(' '));});
-  const ordem={Atrasada:0,Vence:1};L.sort((x,y)=>(ordem[stTarefa(a,x)[0]]??2)-(ordem[stTarefa(a,y)[0]]??2));
-  V.innerHTML='<div class="bar"><span>'+L.length+' tarefas</span></div><div class="list">'+L.slice(0,S.lim).map(r=>{const st=stTarefa(a,r);
-    return '<button class="card" data-t="'+esc(r[0])+'"><div class="ci"><div class="cd">'+esc(v(a,r,'Tarefa','Atividade','Descrição'))+'</div><div class="cm">'+esc(v(a,r,'Equipamento'))+' · '+esc(v(a,r,'Área','Tipo'))+' · '+esc(v(a,r,'Frequência','Periodicidade'))+'</div><div class="cm">Última: '+esc(v(a,r,'Última')||'—')+' · Próxima: '+esc(v(a,r,'Próxima')||'—')+'</div></div><div class="rt"><span class="tag '+st[1]+'">'+esc(st[0])+'</span></div></button>';}).join('')+'</div>'+mais(L.length);
-  V.querySelector('.list').onclick=e=>{const c=e.target.closest('[data-t]');if(c)detTarefa(c.dataset.t);};
+  const ordem={Atrasada:0,Vence:1};
+  const eqs=eqsManut(),fe=fechados(),adm=isAdm()&&podeLancar(),filtro=!!(S.q||S.chip);
+  const sel=S.mSel;
+  const grupos=eqs.map(e=>[e,L.filter(r=>(v(a,r,'Equipamento')||SEM_EQ)===e)]).filter(g=>g[1].length);
+  let h='<div class="bar"><span>'+L.length+' tarefas · '+grupos.length+' equipamento'+(grupos.length===1?'':'s')+'</span><span>'+
+    '<button class="lnk" id="mTg">'+(fe.size?'Abrir todos':'Recolher todos')+'</button>'+(adm?' · <button class="lnk" id="mSl">'+(sel?'Cancelar seleção':'Selecionar')+'</button>':'')+'</span></div>';
+  if(!grupos.length) h+='<div class="empty">'+(a.linhas.length?'Nada encontrado.':'Nenhuma tarefa cadastrada.')+'</div>';
+  grupos.forEach(([e,G],gi)=>{
+    const atr=G.filter(r=>stTarefa(a,r)[0]==='Atrasada').length,ven=G.filter(r=>stTarefa(a,r)[0]==='Vence').length;
+    const aberto=filtro||!fe.has(e);
+    h+='<div class="gh'+(aberto?'':' fe')+'" data-g="'+esc(e)+'"><span class="car">▾</span><span class="gn">'+esc(e)+'</span><span class="gc">'+G.length+(atr?' · <span class="tag c">'+atr+' atras.</span>':'')+(ven?' <span class="tag w">'+ven+' vence</span>':'')+'</span>'+
+      (adm&&e!==SEM_EQ?'<span class="ga"><button data-up="'+gi+'" title="Subir">↑</button><button data-dn="'+gi+'" title="Descer">↓</button><button data-rn="'+esc(e)+'" title="Renomear">✏️</button></span>':'')+'</div>';
+    if(!aberto) return;
+    const tipos=[];G.forEach(r=>{const t=v(a,r,'Tipo','Área')||'Outros';if(tipos.indexOf(t)<0)tipos.push(t);});
+    tipos.sort((x,y)=>{const i=TIPO_ORD.indexOf(x),j=TIPO_ORD.indexOf(y);return ((i<0?99:i)-(j<0?99:j))||x.localeCompare(y,'pt');});
+    h+='<div class="gb">'+tipos.map(t=>{const T=G.filter(r=>(v(a,r,'Tipo','Área')||'Outros')===t).sort((x,y)=>(ordem[stTarefa(a,x)[0]]??2)-(ordem[stTarefa(a,y)[0]]??2));
+      return '<div class="grp">'+esc(t)+' · '+T.length+'</div>'+T.map(r=>{const st=stTarefa(a,r);const id=String(r[0]);
+        return '<div class="card" data-t="'+esc(id)+'">'+(sel?'<input type="checkbox" class="sel" data-s="'+esc(id)+'"'+(sel.has(id)?' checked':'')+'>':'')+'<div class="ci"><div class="cd">'+esc(v(a,r,'Tarefa','Atividade','Descrição'))+'</div><div class="cm">'+esc(id)+' · '+esc(v(a,r,'Periodicidade','Frequência'))+(v(a,r,'Grupo')?' · '+esc(v(a,r,'Grupo')):'')+'</div><div class="cm">Última: '+esc(br(v(a,r,'Última'))||'—')+' · Próxima: '+esc(br(v(a,r,'Próxima'))||'—')+'</div></div><div class="rt"><span class="tag '+st[1]+'">'+esc(st[0])+'</span></div></div>';}).join('');}).join('')+'</div>';
+  });
+  V.innerHTML=h;
+  $('#mTg').onclick=()=>{setFechados(fe.size?new Set():new Set(eqs));renderLista();};
+  if(adm)$('#mSl').onclick=()=>{S.mSel=sel?null:new Set();render();};
+  V.onclick=e=>{
+    const b=e.target.closest('button');
+    if(b&&b.dataset.up!=null){e.stopPropagation();moveEq(grupos.map(g=>g[0]),+b.dataset.up,-1);return;}
+    if(b&&b.dataset.dn!=null){e.stopPropagation();moveEq(grupos.map(g=>g[0]),+b.dataset.dn,1);return;}
+    if(b&&b.dataset.rn!=null){e.stopPropagation();renomearEq(b.dataset.rn);return;}
+    const g=e.target.closest('.gh');if(g&&!b){const f=fechados();f.has(g.dataset.g)?f.delete(g.dataset.g):f.add(g.dataset.g);setFechados(f);renderLista();return;}
+    const c=e.target.closest('[data-t]');if(!c)return;
+    if(sel){const id=c.dataset.t;sel.has(id)?sel.delete(id):sel.add(id);const cb=c.querySelector('.sel');if(cb)cb.checked=sel.has(id);barraSel();return;}
+    detTarefa(c.dataset.t);
+  };
+  barraSel();
+}
+function barraSel(){
+  let sb=$('#selbar');
+  if(!(S.tab==='manut'&&S.mSel)){if(sb)sb.remove();return;}
+  if(!sb){sb=document.createElement('div');sb.id='selbar';sb.className='selbar';document.body.appendChild(sb);}
+  const n=S.mSel.size;
+  sb.innerHTML='<div class="wrap"><b style="flex:1">'+n+' selecionada'+(n===1?'':'s')+'</b><button class="btn" id="sbT">Todas visíveis</button><button class="btn p" id="sbM"'+(n?'':' disabled')+'>Mover para…</button><button class="btn" id="sbC"'+(n?'':' disabled')+'>Copiar para…</button></div>';
+  $('#sbT').onclick=()=>{$('#view').querySelectorAll('[data-s]').forEach(x=>S.mSel.add(x.dataset.s));renderLista();};
+  $('#sbM').onclick=()=>n&&destinoEq('mover',[...S.mSel]);
+  $('#sbC').onclick=()=>n&&destinoEq('copiar',[...S.mSel]);
+}
+function dlEquip(id){return '<datalist id="'+id+'">'+todosEquip().map(e=>'<option value="'+esc(e)+'">').join('')+'</datalist>';}
+function destinoEq(modo,ids){
+  abre('<div class="ph"><b>'+(modo==='mover'?'Mover':'Copiar')+' '+ids.length+' tarefa'+(ids.length===1?'':'s')+'</b><button class="lnk" data-x>Fechar</button></div>'+
+    '<label>Equipamento</label><input id="dE" class="f" list="dlE" placeholder="Escolha ou digite um novo">'+dlEquip('dlE')+
+    '<div class="note">'+(modo==='mover'?'As tarefas passam para o equipamento escolhido (o histórico de execuções continua).':'Cria uma cópia de cada tarefa no equipamento escolhido, com ID novo e sem data de execução.')+'</div>'+
+    '<div class="btns"><button class="btn p" id="dS">'+(modo==='mover'?'Mover':'Copiar')+'</button></div>');
+  $('#dS').onclick=async()=>{
+    const eq=$('#dE').value.trim();if(!eq){toast('Informe o equipamento');return;}
+    if(modo==='mover') await moverTarefas(ids,eq); else await copiarTarefas(ids,eq);
+    S.mSel=null;fecha();render();
+  };
+}
+async function moverTarefas(ids,eq){
+  const a=aba(MN),ce=hdr(a,'Equipamento');
+  for(const id of ids) await enfileira({tipo:'atualizar',aba:MN,id,campos:{[ce]:eq}});
+  toast(ids.length+' tarefa(s) movida(s) para '+eq);
+}
+const MN_NAO_COPIAR=['ID','Última execução','Próxima','Status','Responsável'];
+async function copiarTarefas(ids,eq){
+  const a=aba(MN);const ce=hdr(a,'Equipamento');
+  const rows=ids.map(id=>a.linhas.find(x=>String(x[0])===String(id))).filter(Boolean);
+  for(let k=0;k<rows.length;k++){
+    const r=rows[k],campos={};
+    a.cab.forEach((c,i)=>{if(r[i]===''||MN_NAO_COPIAR.some(n=>norm(c).startsWith(norm(n))))return;campos[c]=r[i];});
+    campos[ce]=eq;campos[a.cab[0]]=proxIdMN();
+    await enfileira({tipo:'incluir',aba:MN,prefixo:'MP',campos});
+  }
+  toast(rows.length+' tarefa(s) copiada(s) para '+eq);
+}
+async function moveEq(lista,i,d){
+  const j=i+d;if(j<0||j>=lista.length)return;
+  const todos=eqsManut();const o=lista.slice();[o[i],o[j]]=[o[j],o[i]];
+  const resto=todos.filter(x=>o.indexOf(x)<0);
+  await enfileira({tipo:'config',chave:'ordem:'+MN,valor:JSON.stringify(o.concat(resto).filter(x=>x!==SEM_EQ))});
+  renderLista();
+}
+function renomearEq(de){
+  abre('<div class="ph"><b>Renomear equipamento</b><button class="lnk" data-x>Fechar</button></div><label>Nome atual</label><div class="f" style="opacity:.7">'+esc(de)+'</div><label>Novo nome</label><input id="rE" class="f" list="dlR" value="'+esc(de)+'">'+dlEquip('dlR')+
+    '<div class="note">Altera o nome em todas as tarefas desse equipamento na aba '+esc(MN)+'. Se escolher um nome que já existe, as tarefas se juntam ao outro equipamento.</div><div class="btns"><button class="btn p" id="rS">Salvar</button></div>');
+  $('#rS').onclick=async()=>{
+    const para=$('#rE').value.trim();if(!para||para===de){fecha();return;}
+    await enfileira({tipo:'renomearValor',aba:MN,coluna:hdr(aba(MN),'Equipamento'),de,para});
+    const o=ordemEq();const k=o.indexOf(de);if(k>=0){if(o.indexOf(para)>=0)o.splice(k,1);else o[k]=para;await enfileira({tipo:'config',chave:'ordem:'+MN,valor:JSON.stringify(o)});}
+    const f=fechados();if(f.delete(de))setFechados(f);
+    toast('Equipamento renomeado');fecha();renderLista();
+  };
 }
 function detTarefa(id){
-  const a=aba('Manutenção');const r=a.linhas.find(x=>String(x[0])===String(id));if(!r)return;
+  const a=aba(MN);const r=a.linhas.find(x=>String(x[0])===String(id));if(!r)return;
   abre('<div class="ph"><b>'+esc(id)+'</b><button class="lnk" data-x>Fechar</button></div><div class="kv">'+a.cab.map((c,i)=>r[i]!==''?'<b>'+esc(c)+'</b><span>'+esc(r[i])+'</span>':'').join('')+'</div>'+
+    (isAdm()&&podeLancar()?'<div class="btns" style="margin-top:0"><button class="btn" id="tEd">✏️ Editar</button><button class="btn" id="tMv">Mover</button><button class="btn" id="tCp">Copiar para…</button><button class="btn" id="tDl" style="color:var(--cr)">Excluir</button></div>':'')+
     (podeLancar()?'<div class="box"><b>Registrar execução</b><label>Data</label><input id="xD" class="f" type="date" value="'+hoje()+'"><label>Tempo parado (min)</label><input id="xT" class="f" inputmode="numeric"><label>Observação</label><textarea id="xO" class="f"></textarea><div class="btns"><button class="btn p" id="xS">Registrar</button></div></div>':''));
+  if(isAdm()&&podeLancar()){
+    $('#tEd').onclick=()=>formTarefa(id);
+    $('#tMv').onclick=()=>destinoEq('mover',[id]);
+    $('#tCp').onclick=()=>destinoEq('copiar',[id]);
+    $('#tDl').onclick=async()=>{if(!confirmar('Excluir a tarefa '+id+' da planilha? O histórico de execuções não é apagado.'))return;await enfileira({tipo:'excluir',aba:MN,id});toast('Tarefa excluída');fecha();renderLista();};
+  }
   if(podeLancar())$('#xS').onclick=async()=>{
     const d=$('#xD').value||hoje();
     const tarefa=v(a,r,'Tarefa','Atividade','Descrição');
-    await enfileira({tipo:'atualizar',aba:'Manutenção',id,campos:{'Última execução':d}});
+    await enfileira({tipo:'atualizar',aba:MN,id,campos:{[hdr(a,'Última execução','Última')]:d}});
     await enfileira({tipo:'incluir',aba:'Histórico',prefixo:'H',campos:histCampos({data:d,tipo:'Preventiva',equip:v(a,r,'Equipamento'),area:v(a,r,'Área','Tipo'),desc:tarefa,tarefa:id,acao:'Executada conforme plano',tempo:$('#xT').value,obs:$('#xO').value})});
     toast('Execução registrada');fecha();renderLista();
   };
+}
+/* cadastrar / editar tarefa (administrador) */
+function formTarefa(id){
+  const a=aba(MN);const r=id?a.linhas.find(x=>String(x[0])===String(id)):null;
+  const val=n=>r?v(a,r,n):'';
+  const uniq=n=>[...new Set(a.linhas.map(x=>v(a,x,n)).filter(Boolean))].sort((x,y)=>x.localeCompare(y,'pt'));
+  const tipos=[...new Set(TIPO_ORD.concat(uniq('Tipo')))];
+  const eqPre=r?val('Equipamento'):(S.mUlt||'');
+  const F=[['Equipamento','fE','list:dlE2'],['Tipo','fT','sel'],['Grupo','fG','list:dlG'],['Tarefa','fX','area'],['Periodicidade','fP','list:dlP'],['Dias','fD','num'],['Responsável','fR',''],['Observação','fO','area']];
+  const campo=([n,k,t])=>{const lab='<label>'+esc(hdr(a,n))+'</label>';const vv=n==='Equipamento'?eqPre:val(n);
+    if(t==='sel')return lab+'<select id="'+k+'" class="f">'+tipos.map(x=>'<option'+(x===vv?' selected':'')+'>'+esc(x)+'</option>').join('')+'</select>';
+    if(t==='area')return lab+'<textarea id="'+k+'" class="f">'+esc(vv)+'</textarea>';
+    if(t==='num')return lab+'<input id="'+k+'" class="f" inputmode="numeric" value="'+esc(vv)+'">';
+    if(t.startsWith('list:'))return lab+'<input id="'+k+'" class="f" list="'+t.slice(5)+'" value="'+esc(vv)+'">';
+    return lab+'<input id="'+k+'" class="f" value="'+esc(vv)+'">';};
+  abre('<div class="ph"><b>'+(r?'Editar tarefa '+esc(id):'Nova tarefa')+'</b><button class="lnk" data-x>Fechar</button></div>'+F.map(campo).join('')+
+    dlEquip('dlE2')+'<datalist id="dlG">'+uniq('Grupo').map(x=>'<option value="'+esc(x)+'">').join('')+'</datalist><datalist id="dlP">'+uniq('Periodicidade').map(x=>'<option value="'+esc(x)+'">').join('')+'</datalist>'+
+    '<div class="btns"><button class="btn p" id="fS">'+(r?'Salvar':'Adicionar')+'</button>'+(r?'':'<button class="btn" id="fS2">Adicionar e cadastrar outra</button>')+'</div><div class="note">"Próxima" e "Status" são calculados pela planilha.</div>');
+  const salvar=async(outra)=>{
+    const novo={};F.forEach(([n,k])=>{novo[n]=$('#'+k).value.trim();});
+    if(!novo.Equipamento||!novo.Tarefa){toast('Informe equipamento e tarefa');return;}
+    if(novo.Dias&&isNaN(num(novo.Dias))){toast('Dias deve ser um número');return;}
+    S.mUlt=novo.Equipamento;
+    if(r){const campos={};F.forEach(([n])=>{if(novo[n]!==String(val(n)))campos[hdr(a,n)]=n==='Dias'&&novo[n]?num(novo[n]):novo[n];});
+      if(!Object.keys(campos).length){fecha();return;}
+      await enfileira({tipo:'atualizar',aba:MN,id,campos});toast('Tarefa atualizada');}
+    else{const campos={[a.cab[0]||'ID']:proxIdMN()};F.forEach(([n])=>{if(novo[n]!=='')campos[hdr(a,n)]=n==='Dias'?num(novo[n]):novo[n];});
+      await enfileira({tipo:'incluir',aba:MN,prefixo:'MP',campos});toast('Tarefa '+campos[a.cab[0]||'ID']+' adicionada');}
+    if(outra){formTarefa();$('#fX').focus();}else{fecha();}
+    renderLista();
+  };
+  $('#fS').onclick=()=>salvar(false);
+  if(!r)$('#fS2').onclick=()=>salvar(true);
 }
 /* mapeia campos lógicos para os cabeçalhos reais do Histórico */
 function histCampos(o){
@@ -634,7 +803,7 @@ function pdfChecklist(uid,linhas){
 let _pdfT=0;
 function pdfAbrir(nome){
   if(Date.now()-_pdfT<1500)return;_pdfT=Date.now();
-  const t=document.title;document.title=nome;
+  aplicaRotulos($('#print'));const t=document.title;document.title=nome;
   setTimeout(()=>{try{window.print();}catch(e){toast('Use o menu do navegador → Imprimir → Salvar como PDF');}document.title=t;},150);
 }
 
@@ -693,13 +862,35 @@ function pdfLed(mes,L){
 async function lMais(V){
   const k=aba('Kits');const nf=S.fila;
   const imgs=Object.keys(S.img).length;
-  V.innerHTML='<div class="box"><b>'+esc(S.user.nome)+'</b><div class="note">Perfil: '+esc(S.user.perfil)+'</div><div class="btns">'+'<button class="btn" id="mHist">📋 Histórico</button><button class="btn" id="mSair">Sair</button></div></div>'+
+  V.innerHTML='<div class="box"><b>'+esc(S.user.nome)+'</b><div class="note">Perfil: '+esc(S.user.perfil)+'</div><div class="btns">'+'<button class="btn" id="mHist">📋 Histórico</button>'+(isAdm()?'<button class="btn" id="mNomes">✏️ Renomear abas e campos</button>':'')+'<button class="btn" id="mSair">Sair</button></div></div>'+
     '<div class="box"><b>Dados no celular</b><div class="note">'+Object.keys(S.d.abas).map(n=>esc(n)+': '+S.d.abas[n].linhas.length).join(' · ')+'</div><div class="note">Imagens guardadas: '+imgs+'</div><div class="note">Lançamentos aguardando envio: '+nf+'</div><div class="btns"><button class="btn" id="mFila">Ver fila</button><button class="btn" id="mImg">Baixar imagens de novo</button></div></div>'+
     (k.linhas.length?'<div class="box"><b>Kits</b>'+kitsHtml(k)+'</div>':'')+
     '<div class="note" style="text-align:center;margin:16px 0">PCM Gassen · app v'+esc(CONFIG.VERSAO)+'</div>';
-  $('#mSair').onclick=sair;$('#mHist').onclick=()=>{S.tab='hist';S.chip='';S.q='';$('#q').value='';render();};$('#mImg').onclick=()=>{baixaImagens(true);toast('Baixando imagens…');};
+  $('#mSair').onclick=sair;if(isAdm())$('#mNomes').onclick=()=>formNomes();$('#mHist').onclick=()=>{S.tab='hist';S.chip='';S.q='';$('#q').value='';render();};$('#mImg').onclick=()=>{baixaImagens(true);toast('Baixando imagens…');};
   $('#mFila').onclick=async()=>{const f=(await all('fila')).map(x=>x[1]).sort((a,b)=>a.ts-b.ts);abre('<div class="ph"><b>Fila de envio</b><button class="lnk" data-x>Fechar</button></div>'+(f.length?f.map(o=>'<div class="card" style="cursor:default"><div class="ci"><div class="cd">'+esc(o.tipo)+' · '+esc(o.aba||'imagem')+' '+esc(o.id||'')+'</div><div class="cm">'+new Date(o.ts).toLocaleString('pt-BR')+(o.erro?' · <span class="tag c">'+esc(o.erro)+'</span>':'')+'</div></div><button class="lnk" data-del="'+o.uid+'">Descartar</button></div>').join(''):'<div class="empty">Nada pendente.</div>'));
     $('#pane').querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{if(!confirmar('Descartar este lançamento? Ele não será enviado.'))return;await del('fila',b.dataset.del);S.fila=await count('fila');status();b.closest('.card').remove();});};
+}
+
+/* renomear abas e campos (administrador) — grava na aba "Config app" da planilha */
+const ROT_EXTRA=['Data','Turno','Equipamento','Categoria','O que verificar','Tempo parado (min)','Observação','Status','Qtd','Loja','Link de compra','Descrição','Código','ID da peça','Defeito / serviço','Ação realizada','Peças usadas','Área','Tipo','Data da troca','Setor / local','Refletor (identificação)','Potência (W)','Motivo'];
+function formNomes(){
+  const telas=['pecas','serras','manut','check','led','compras','hist','mais'];
+  const vis=['Peças','Serras','manuais_pecas','Manutenção','Histórico','Compras','Checklist itens','Checklist registros','Refletores LED','Kits'];
+  const set=[];vis.forEach(n=>aba(n).cab.forEach(c=>{c=String(c).trim();if(c&&set.indexOf(c)<0)set.push(c);}));ROT_EXTRA.forEach(c=>{if(set.indexOf(c)<0)set.push(c);});
+  set.sort((x,y)=>x.localeCompare(y,'pt'));
+  const linha=(k,orig)=>'<div class="rn"><span title="'+esc(orig)+'">'+esc(orig)+'</span><input class="f" data-k="'+esc(k)+'" data-v="'+esc(cfg(k))+'" value="'+esc(cfg(k))+'" placeholder="'+esc(orig)+'"></div>';
+  abre('<div class="ph"><b>Renomear abas e campos</b><button class="lnk" data-x>Fechar</button></div>'+
+    '<div class="note">Deixe em branco para voltar ao nome original. A mudança vale para todos os celulares depois de sincronizar. Os nomes na planilha não mudam.</div>'+
+    '<div class="grp">Abas do app (nome · rodapé usa o mesmo nome)</div>'+telas.map(t=>linha('aba:'+t,TIT[t])).join('')+
+    '<div class="grp">Campos</div><input id="rnQ" class="f" placeholder="Filtrar campos…" style="margin-bottom:6px"><div id="rnL">'+set.map(c=>linha('campo:'+c,c)).join('')+'</div>'+
+    '<div class="btns" style="position:sticky;bottom:0;background:var(--sf);padding:8px 0"><button class="btn p" id="rnS">Salvar nomes</button></div>');
+  $('#pane').querySelectorAll('.rn span,.rn input').forEach(el=>{delete el.dataset.o;});
+  $('#rnQ').oninput=e=>{const q=norm(e.target.value);$('#rnL').querySelectorAll('.rn').forEach(d=>{d.hidden=q&&!norm(d.textContent+' '+d.querySelector('input').value).includes(q);});};
+  $('#rnS').onclick=async()=>{
+    const mud=[...$('#pane').querySelectorAll('input[data-k]')].filter(i=>i.value.trim()!==i.dataset.v);
+    for(const i of mud) await enfileira({tipo:'config',chave:i.dataset.k,valor:i.value.trim()});
+    toast(mud.length?mud.length+' nome(s) alterado(s)':'Nada alterado');fecha();render();
+  };
 }
 
 /* ---------------- início ---------------- */
