@@ -261,7 +261,7 @@ async function enfileira(op){
 /* ---------------- sincronização ---------------- */
 async function sincroniza(baixar){
   if(S.sync) return; if(!navigator.onLine){status();toast('Sem internet — os lançamentos ficam guardados');return;}
-  S.sync=true;status();
+  S.sync=true;status();let okSync=false;
   try{
     const fila=(await all('fila')).map(x=>x[1]).sort((a,b)=>a.ts-b.ts);
     if(fila.length){
@@ -274,8 +274,11 @@ async function sincroniza(baixar){
     if(baixar!==false||fila.length){ await baixaDados(); }
     S.fila=await count('fila');
     ls.set('pcm_sync',Date.now());
+    okSync=true;
   }catch(e){ toast('Falha ao sincronizar: '+e.message); }
   S.sync=false;status();render();
+  // lançamentos feitos durante a sincronização: envia em seguida
+  if(okSync&&navigator.onLine){const rest=(await all('fila')).filter(x=>!x[1].erro);if(rest.length)setTimeout(()=>sincroniza(false),400);}
 }
 async function baixaDados(){
   const d=await api('dados');
