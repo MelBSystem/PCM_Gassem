@@ -30,6 +30,7 @@ h1{font-size:18px;margin:0}
 .q{width:100%;margin-top:8px;padding:10px 12px;border:1px solid var(--ln);border-radius:var(--r);background:var(--sf);font-size:16px}
 .chips{display:flex;gap:6px;overflow-x:auto;padding:8px 0 2px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
+@media (hover:hover) and (pointer:fine){.chips{flex-wrap:wrap;overflow-x:visible;row-gap:6px}}
 .chip{flex:none;border:1px solid var(--ln);background:var(--sf);border-radius:999px;padding:5px 11px;font-size:13px;cursor:pointer;white-space:nowrap}
 .chip[aria-pressed=true]{background:var(--ac);border-color:var(--ac);color:#fff}
 main.wrap{padding-bottom:calc(96px + env(safe-area-inset-bottom))}
@@ -376,6 +377,7 @@ function chips(){
   $('#chips').hidden=!c.length;
   const edF=isAdm()&&podeLancar()&&c.length&&['pecas','serras','manut','check'].includes(S.tab);
   $('#chips').innerHTML=['<button class="chip" data-c="" aria-pressed="'+(!S.chip)+'">Todos</button>'].concat(c.map(x=>'<button class="chip" data-c="'+esc(x)+'" aria-pressed="'+(S.chip===x)+'">'+esc(nomeFiltro(x))+'</button>')).join('')+(edF?'<button class="chip" id="chEd" title="Renomear filtros">✏️ Renomear</button>':'');
+  if(!chips.w){chips.w=1;const ce=$('#chips');ce.addEventListener('wheel',e=>{if(ce.scrollWidth>ce.clientWidth&&Math.abs(e.deltaY)>Math.abs(e.deltaX)){ce.scrollLeft+=e.deltaY;e.preventDefault();}},{passive:false});}
   $('#chips').onclick=e=>{if(e.target.closest('#chEd')){formFiltros(c);return;}const b=e.target.closest('.chip');if(!b)return;S.chip=b.dataset.c;S.lim=40;chips();renderLista();};
 }
 const busca=(txt)=>!S.q||norm(txt).includes(S.q);
