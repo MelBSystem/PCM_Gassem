@@ -230,6 +230,7 @@ const CFG_AB='Config app';
 function cfg(k){const a=aba(CFG_AB);const r=a.linhas.find(x=>String(x[0])===k);return r?String(r[1]||''):'';}
 function nomeTela(t){return cfg('aba:'+t)||TIT[t];}
 function rot(c){return cfg('campo:'+String(c).trim())||c;}
+function nomeFiltro(x,t){return cfg('filtro:'+(t||S.tab)+':'+x)||x;}
 function isAdm(){return !!(S.user&&S.user.perfil==='administrador');}
 function aplicaNomes(){document.querySelectorAll('.nb').forEach(b=>{const n=b.querySelector('.nl');if(n)n.textContent=cfg('aba:'+b.dataset.t)||NAVROT[b.dataset.t];});}
 function aplicaRotulos(root){if(!root)return;root.querySelectorAll('label,.kv>b,th,.rot').forEach(el=>{if(el.children.length)return;const o=el.dataset.o||(el.dataset.o=el.textContent.trim());const n=cfg('campo:'+o);el.textContent=n||o;});}
@@ -373,8 +374,9 @@ function chips(){
   if(S.tab==='check'){const set=[];aba('Checklist itens').linhas.forEach(r=>{const e=v(aba('Checklist itens'),r,'Equipamento');if(e&&set.indexOf(e)<0)set.push(e);});c=set.sort();}
   if(S.tab==='led'){c=ledMeses();}
   $('#chips').hidden=!c.length;
-  $('#chips').innerHTML=['<button class="chip" data-c="" aria-pressed="'+(!S.chip)+'">Todos</button>'].concat(c.map(x=>'<button class="chip" data-c="'+esc(x)+'" aria-pressed="'+(S.chip===x)+'">'+esc(x)+'</button>')).join('');
-  $('#chips').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;S.chip=b.dataset.c;S.lim=40;chips();renderLista();};
+  const edF=isAdm()&&podeLancar()&&c.length&&['pecas','serras','manut','check'].includes(S.tab);
+  $('#chips').innerHTML=['<button class="chip" data-c="" aria-pressed="'+(!S.chip)+'">Todos</button>'].concat(c.map(x=>'<button class="chip" data-c="'+esc(x)+'" aria-pressed="'+(S.chip===x)+'">'+esc(nomeFiltro(x))+'</button>')).join('')+(edF?'<button class="chip" id="chEd" title="Renomear filtros">✏️ Renomear</button>':'');
+  $('#chips').onclick=e=>{if(e.target.closest('#chEd')){formFiltros(c);return;}const b=e.target.closest('.chip');if(!b)return;S.chip=b.dataset.c;S.lim=40;chips();renderLista();};
 }
 const busca=(txt)=>!S.q||norm(txt).includes(S.q);
 function imgDe(id){return S.img[id];}
@@ -411,7 +413,7 @@ function lSerras(V){
   const L=a.linhas.filter(r=>(!S.chip||v(a,r,'Aba origem')===S.chip)&&busca(r.join(' ')));
   V.innerHTML='<div class="bar"><span>'+L.length+' peças</span>'+(S.chip?'<button class="lnk" id="vv">Vistas explodidas</button>':'')+'</div><div class="list">'+L.slice(0,S.lim).map(r=>{
     const est=v(a,r,'Estoque atual');
-    return '<button class="card" data-p="'+esc(r[0])+'">'+thumb(v(a,r,'Imagem ID'))+'<div class="ci"><div class="cd">'+esc(v(a,r,'Descrição'))+'</div><div class="cc">'+esc(v(a,r,'Código')&&v(a,r,'Código')!=='—'?v(a,r,'Código'):'sem código')+'</div><div class="cm"><span class="tag">'+esc(v(a,r,'Aba origem'))+'</span>Item '+esc(v(a,r,'Item'))+' · Qtd '+esc(v(a,r,'Qtd'))+'</div></div>'+(est!==''?'<div class="rt">'+esc(est)+'</div>':'')+'</button>';
+    return '<button class="card" data-p="'+esc(r[0])+'">'+thumb(v(a,r,'Imagem ID'))+'<div class="ci"><div class="cd">'+esc(v(a,r,'Descrição'))+'</div><div class="cc">'+esc(v(a,r,'Código')&&v(a,r,'Código')!=='—'?v(a,r,'Código'):'sem código')+'</div><div class="cm"><span class="tag">'+esc(nomeFiltro(v(a,r,'Aba origem'),'serras'))+'</span>Item '+esc(v(a,r,'Item'))+' · Qtd '+esc(v(a,r,'Qtd'))+'</div></div>'+(est!==''?'<div class="rt">'+esc(est)+'</div>':'')+'</button>';
   }).join('')+'</div>'+mais(L.length);
   V.querySelector('.list').onclick=e=>{const c=e.target.closest('[data-p]');if(c)detPeca('manuais_pecas',c.dataset.p);};
   const vv=$('#vv');if(vv)vv.onclick=()=>listaVistas(S.chip);
@@ -471,7 +473,7 @@ function reduz(file){return new Promise((ok,ko)=>{const fr=new FileReader();fr.o
 const VMAP={'Serra Peito SBP':['V01','V02','V03'],'Serra Chifre SCHB':['V04','V05'],'Balancim BMB 2700':['V06','V07','V08','V09'],'Serra Peito SP1':['V10'],'Balancim BPD 140':['V11'],'Estimulador ES-4':['V12','V13'],'Serra Chifre FAM5':['V14'],'Insens. Zana Traumagado':['V15','V16','V17','V18'],'Insens. Zana Shigueru':['V15','V16','V19','V20','V21'],'Serra Fita Buster V':['V22','V23','V24','V25','V26','V27','V28','V29','V30']};
 function listaVistas(eq){
   const ids=VMAP[eq]||[];const tit=id=>{const x=(S.d.vistas||[]).find(y=>y.id===id);return x?x.titulo:id;};
-  abre('<div class="ph"><b>Vistas · '+esc(eq)+'</b><button class="lnk" data-x>Fechar</button></div><div class="list">'+ids.map(i=>'<button class="btn" data-v="'+i+'" style="text-align:left">'+esc(tit(i))+'</button>').join('')+'</div><div class="note">Desenhos já abertos uma vez ficam disponíveis sem internet.</div>');
+  abre('<div class="ph"><b>Vistas · '+esc(nomeFiltro(eq,'serras'))+'</b><button class="lnk" data-x>Fechar</button></div><div class="list">'+ids.map(i=>'<button class="btn" data-v="'+i+'" style="text-align:left">'+esc(tit(i))+'</button>').join('')+'</div><div class="note">Desenhos já abertos uma vez ficam disponíveis sem internet.</div>');
   $('#pane').querySelectorAll('[data-v]').forEach(b=>b.onclick=()=>vista(b.dataset.v));
 }
 async function vista(id){
@@ -898,6 +900,20 @@ async function lMais(V){
     $('#pane').querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{if(!confirmar('Descartar este lançamento? Ele não será enviado.'))return;await del('fila',b.dataset.del);S.fila=await count('fila');status();b.closest('.card').remove();});};
 }
 
+/* renomear os filtros (chips) da tela atual — só muda o nome exibido no app */
+function formFiltros(lista){
+  const fixos=['A comprar','Atrasada','Vence','Em dia'];
+  const L=lista.filter(x=>x);
+  abre('<div class="ph"><b>Renomear filtros · '+esc(nomeTela(S.tab))+'</b><button class="lnk" data-x>Fechar</button></div>'+
+    '<div class="note">Deixe em branco para voltar ao nome original. Muda só o nome mostrado no app (para todos os celulares); a planilha continua igual.</div>'+
+    L.map(x=>{const k='filtro:'+S.tab+':'+x;return '<div class="rn"><span title="'+esc(x)+'">'+esc(x)+(fixos.includes(x)?' <i class="cm">(status)</i>':'')+'</span><input class="f" data-k="'+esc(k)+'" data-v="'+esc(cfg(k))+'" value="'+esc(cfg(k))+'" placeholder="'+esc(x)+'"></div>';}).join('')+
+    '<div class="btns" style="position:sticky;bottom:0;background:var(--sf);padding:8px 0"><button class="btn p" id="ffS">Salvar nomes</button></div>');
+  $('#ffS').onclick=async()=>{
+    const mud=[...$('#pane').querySelectorAll('input[data-k]')].filter(i=>i.value.trim()!==i.dataset.v);
+    for(const i of mud) await enfileira({tipo:'config',chave:i.dataset.k,valor:i.value.trim()});
+    toast(mud.length?mud.length+' nome(s) alterado(s)':'Nada alterado');fecha();render();
+  };
+}
 /* renomear abas e campos (administrador) — grava na aba "Config app" da planilha */
 const ROT_EXTRA=['Data','Turno','Equipamento','Categoria','O que verificar','Tempo parado (min)','Observação','Status','Qtd','Loja','Link de compra','Descrição','Código','ID da peça','Defeito / serviço','Ação realizada','Peças usadas','Área','Tipo','Data da troca','Setor / local','Refletor (identificação)','Potência (W)','Motivo'];
 function formNomes(){
