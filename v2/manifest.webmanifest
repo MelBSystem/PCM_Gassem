@@ -1,7 +1,7 @@
 {
-  "name": "PCM Gassen 2 (integrado)",
-  "short_name": "PCM Gassen 2",
-  "description": "PCM Abate Gassen integrado com a planilha elétrica da planta nova – equipamentos por Setor/TAG.",
+  "name": "PCM Manutenção 2 (integrado)",
+  "short_name": "PCM Manutenção 2",
+  "description": "PCM Linha de Abate integrado com a planilha elétrica da planta nova – equipamentos por Setor/TAG.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
