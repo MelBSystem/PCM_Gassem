@@ -1,4 +1,4 @@
-# Mel.B System – app mobile
+# PCM – app mobile
 
 App instalável (PWA) de manutenção de uma linha de abate.
 Os dados ficam na planilha Google do PCM; o app conversa com ela por um serviço do Google Apps Script.

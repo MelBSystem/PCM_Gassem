@@ -7,8 +7,8 @@
 <meta name="robots" content="noindex, nofollow, noarchive">
 <meta name="referrer" content="no-referrer">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Mel.B System">
-<title>Mel.B System</title>
+<meta name="apple-mobile-web-app-title" content="PCM">
+<title>PCM</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -147,7 +147,7 @@ textarea.f{min-height:70px}
 </head>
 <body>
 <div id="vLogin" class="login" hidden>
-  <h1>Mel.B System</h1>
+  <h1>PCM</h1>
   <div class="st">PCM - Manutenção</div>
   <div class="box">
     <label>ID do usuário</label><input id="lgN" class="f" autocomplete="username" autocapitalize="off" spellcheck="false">
@@ -156,6 +156,7 @@ textarea.f{min-height:70px}
     <div id="lgE" class="note"></div>
   </div>
   <div class="note">O acesso é cadastrado pelo administrador. O primeiro acesso precisa de internet para baixar as peças e imagens; depois o app funciona sem sinal.</div>
+  <div class="note" style="text-align:center;margin-top:22px;opacity:.75">Criado por Mel.B System</div>
 </div>
 
 <div id="vApp" hidden>
@@ -534,7 +535,7 @@ function relManut(mes){
   const parado=L.reduce((s,r)=>s+num(v(a,r,'Tempo parado','Tempo')),0);
   const eqs={};L.forEach(r=>{const e=v(a,r,'Equipamento')||'—';eqs[e]=(eqs[e]||0)+1;});
   const top=Object.entries(eqs).sort((x,y)=>y[1]-x[1]).slice(0,5);
-  let h='<h1>Relatório de manutenção · '+esc(mesNome(mes))+'</h1><div class="meta">Mel.B System · '+L.length+' registros · '+tipos.map(t=>esc(t)+': '+L.filter(r=>(v(a,r,'Tipo')||'Outros')===t).length+' · ').join('')+Math.round(parado)+' min de máquina parada · '+aba(LED_AB).linhas.filter(r=>ledMesDa(aba(LED_AB),r)===mes).length+' trocas de LED · emitido em '+esc(new Date().toLocaleString('pt-BR'))+' por '+esc(S.user.nome)+'</div>';
+  let h='<h1>Relatório de manutenção · '+esc(mesNome(mes))+'</h1><div class="meta">PCM · '+L.length+' registros · '+tipos.map(t=>esc(t)+': '+L.filter(r=>(v(a,r,'Tipo')||'Outros')===t).length+' · ').join('')+Math.round(parado)+' min de máquina parada · '+aba(LED_AB).linhas.filter(r=>ledMesDa(aba(LED_AB),r)===mes).length+' trocas de LED · emitido em '+esc(new Date().toLocaleString('pt-BR'))+' por '+esc(S.user.nome)+'</div>';
   if(top.length)h+='<div class="meta"><b>Equipamentos com mais registros:</b> '+top.map(([e,n])=>esc(e)+' ('+n+')').join(' · ')+'</div>';
   if(!L.length)h+='<h2>Manutenção</h2><p>Nenhum registro de manutenção neste mês.</p>';
   tipos.forEach(t=>{const T=L.filter(r=>(v(a,r,'Tipo')||'Outros')===t);
@@ -925,7 +926,7 @@ function pdfChecklist(uid,linhas){
   const n={ok:0,nok:0,na:0,p:0};L.forEach(x=>{const r=norm(x.res);if(r==='ok')n.ok++;else if(r==='nao ok')n.nok++;else if(r==='n/a')n.na++;else n.p++;});
   let rows='',ult='';
   L.forEach(x=>{const k=x.eq+' — '+x.cat;if(k!==ult){rows+='<tr class="g"><td colspan="3">'+esc(k)+'</td></tr>';ult=k;}rows+='<tr><td>'+esc(x.item)+'</td><td class="'+(norm(x.res)==='nao ok'?'nok':'')+'">'+esc(x.res)+'</td><td>'+esc(x.obs)+'</td></tr>';});
-  $('#print').innerHTML='<h1>Checklist diário · Mel.B System</h1><div class="meta">Data: <b>'+esc(br(L[0].data))+'</b> · Responsável: <b>'+esc(L[0].resp)+'</b> · Concluído em: '+esc(L[0].fim)+' · Nº '+esc(uid)+'<br>Resultado: '+n.ok+' OK · '+n.nok+' não OK · '+n.na+' N/A'+(n.p?' · '+n.p+' pendentes':'')+'</div>'+
+  $('#print').innerHTML='<h1>Checklist diário · PCM</h1><div class="meta">Data: <b>'+esc(br(L[0].data))+'</b> · Responsável: <b>'+esc(L[0].resp)+'</b> · Concluído em: '+esc(L[0].fim)+' · Nº '+esc(uid)+'<br>Resultado: '+n.ok+' OK · '+n.nok+' não OK · '+n.na+' N/A'+(n.p?' · '+n.p+' pendentes':'')+'</div>'+
     '<table><thead><tr><th style="width:52%">Item verificado</th><th style="width:12%">Resultado</th><th>Observação</th></tr></thead><tbody>'+rows+'</tbody></table>'+
     '<div class="ass"><div>Executante</div><div>Supervisor / PCM</div></div>';
   pdfAbrir('Checklist_'+String(L[0].data).replace(/\D/g,'')+'_'+uid);
@@ -982,7 +983,7 @@ function formLed(id){
 }
 function pdfLed(mes,L){
   const a=aba(LED_AB);const tot=L.reduce((s,r)=>s+(num(v(a,r,'Qtd'))||1),0);
-  $('#print').innerHTML='<h1>Troca de refletores LED · '+esc(mes)+'</h1><div class="meta">Mel.B System · '+L.length+' registros · '+tot+' refletores · emitido em '+esc(new Date().toLocaleString('pt-BR'))+'</div>'+
+  $('#print').innerHTML='<h1>Troca de refletores LED · '+esc(mes)+'</h1><div class="meta">PCM · '+L.length+' registros · '+tot+' refletores · emitido em '+esc(new Date().toLocaleString('pt-BR'))+'</div>'+
     '<table><thead><tr><th>Data</th><th>Setor / local</th><th>Refletor</th><th>W</th><th>Qtd</th><th>Motivo</th><th>Responsável</th><th>Obs.</th></tr></thead><tbody>'+
     L.map(r=>'<tr><td>'+esc(br(v(a,r,'Data')))+'</td><td>'+esc(v(a,r,'Setor'))+'</td><td>'+esc(v(a,r,'Refletor'))+'</td><td>'+esc(v(a,r,'Potência'))+'</td><td>'+esc(v(a,r,'Qtd'))+'</td><td>'+esc(v(a,r,'Motivo'))+'</td><td>'+esc(v(a,r,'Respons'))+'</td><td>'+esc(v(a,r,'Observ'))+'</td></tr>').join('')+'</tbody></table>';
   pdfAbrir('Refletores_LED_'+mes.replace('/','_'));
@@ -995,7 +996,7 @@ async function lMais(V){
   V.innerHTML='<div class="box"><b>'+esc(S.user.nome)+'</b><div class="note">Perfil: '+esc(S.user.perfil)+'</div><div class="btns">'+'<button class="btn" id="mManual">📘 Manutenção segundo o Manual</button>'+(isAdm()?'<button class="btn" id="mUsu">👥 Usuários</button><button class="btn" id="mNomes">✏️ Renomear abas e campos</button>':'')+'<button class="btn" id="mSair">Sair</button></div></div>'+
     '<div class="box"><b>Dados no celular</b><div class="note">'+Object.keys(S.d.abas).map(n=>esc(n)+': '+S.d.abas[n].linhas.length).join(' · ')+'</div><div class="note">Imagens guardadas: '+imgs+'</div><div class="note">Lançamentos aguardando envio: '+nf+'</div><div class="btns"><button class="btn" id="mFila">Ver fila</button><button class="btn" id="mImg">Baixar imagens de novo</button></div></div>'+
     (k.linhas.length?'<div class="box"><b>Kits</b>'+kitsHtml(k)+'</div>':'')+
-    '<div class="note" style="text-align:center;margin:16px 0">Mel.B System · app v'+esc(CONFIG.VERSAO)+'</div>';
+    '<div class="note" style="text-align:center;margin:16px 0">PCM · app v'+esc(CONFIG.VERSAO)+'<br><span style="opacity:.75">Criado por Mel.B System</span></div>';
   $('#mSair').onclick=sair;$('#mManual').onclick=abreManual;if(isAdm()){$('#mNomes').onclick=()=>formNomes();$('#mUsu').onclick=()=>telaUsuarios();}$('#mImg').onclick=()=>{baixaImagens(true);toast('Baixando imagens…');};
   $('#mFila').onclick=async()=>{const f=(await all('fila')).map(x=>x[1]).sort((a,b)=>a.ts-b.ts);abre('<div class="ph"><b>Fila de envio</b><button class="lnk" data-x>Fechar</button></div>'+(f.length?f.map(o=>'<div class="card" style="cursor:default"><div class="ci"><div class="cd">'+esc(o.tipo)+' · '+esc(o.aba||'imagem')+' '+esc(o.id||'')+'</div><div class="cm">'+new Date(o.ts).toLocaleString('pt-BR')+(o.erro?' · <span class="tag c">'+esc(o.erro)+'</span>':'')+'</div></div><button class="lnk" data-del="'+o.uid+'">Descartar</button></div>').join(''):'<div class="empty">Nada pendente.</div>'));
     $('#pane').querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{if(!confirmar('Descartar este lançamento? Ele não será enviado.'))return;await del('fila',b.dataset.del);S.fila=await count('fila');status();b.closest('.card').remove();});};
