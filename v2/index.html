@@ -146,10 +146,13 @@ body.esqon{overflow:hidden}
 .esqlista{position:absolute;inset:0;top:0;background:var(--bg);overflow:auto;padding:10px;z-index:2}
 .esqlh{display:flex;gap:6px;position:sticky;top:-10px;background:var(--bg);padding:6px 0;z-index:1}.esqlh .f{flex:1;margin:0}
 .mini{font-size:12px;padding:3px 8px;border-radius:7px;border:1px solid var(--ln);background:var(--sf);color:var(--ac);cursor:pointer;margin-top:4px;white-space:nowrap}
+.carck{flex:none;width:24px;height:24px;border-radius:6px;border:2px solid var(--ln);display:grid;place-items:center;font-weight:700;color:#fff;align-self:center}
+.card.carsel{border-color:var(--ac);background:var(--ac2)}.card.carsel .carck{background:var(--ac);border-color:var(--ac)}
+.carq{font-size:12px;color:var(--mu);margin-top:6px;display:flex;align-items:center;gap:6px}.carq .f{width:80px;padding:5px 8px;margin:0}
 #print{display:none}
 @media print{
   body{background:#fff!important;color:#000!important}
-  #vApp,#vLogin,#sheet,#zoom,#toast,.fab{display:none!important}
+  #vApp,#vLogin,#sheet,#zoom,#toast,.fab,.selbar,#esqV{display:none!important}
   #print{display:block!important;font:12px/1.35 Arial,Helvetica,sans-serif;color:#000}
   #print h1{font-size:18px;margin:0 0 2px}
   #print .meta{font-size:11px;color:#333;margin-bottom:10px}
@@ -442,7 +445,7 @@ function ligaMais(){const m=$('#mais');if(m)m.onclick=()=>{S.lim+=40;renderLista
 function renderLista(){
   const V=$('#view');
   if(!S.d){V.innerHTML='<div class="empty">Sem dados. Toque em ↻ Sincronizar com internet.</div>';return;}
-  V.onclick=null;const sb=$('#selbar');if(sb&&!(S.tab==='manual'&&S.mSel)){sb.remove();document.body.classList.remove('comsel');}
+  V.onclick=null;const sb=$('#selbar');if(sb&&!(S.tab==='manual'&&S.mSel)){sb.remove();document.body.classList.remove('comsel');}if(S.tab!=='compras'){S.carModo=false;const cb=$('#carbar');if(cb){cb.remove();document.body.classList.remove('comsel');}}
   ({equip:lEquip,pecas:lPecas,serras:lSerras,manut:lManutNova,manual:lManut,hist:lHist,compras:lCompras,mais:lMais,check:lCheck,led:lLed})[S.tab](V);
   aplicaRotulos(V);ligaMais();
 }
@@ -900,12 +903,75 @@ function formHist(tipoPre){
   };
 }
 /* ---- Compras ---- */
+/* ================= COMPRAS + CARRINHO (seleção manual → PDF para o financeiro) ================= */
+const CAR_K=(location.pathname.indexOf('/v2/')>=0?'pcm2':'pcm')+'_carrinho';
+function carGet(){return ls.get(CAR_K)||{};}
+function carSet(o){ls.set(CAR_K,o);}
+function carChave(a,r){return [v(a,r,'ID peça','ID'),v(a,r,'Código'),v(a,r,'Descrição'),v(a,r,'Data')].join('|');}
+/* código e descrição: da própria linha de Compras; se faltar, busca na peça (Peças / Serras) */
+function carPeca(a,r){
+  let cod=v(a,r,'Código'),desc=v(a,r,'Descrição');const pid=v(a,r,'ID peça','ID');
+  if(pid&&(!cod||!desc)){const ab=/^M\d+$/.test(pid)?'manuais_pecas':'Peças';const pa=aba(ab);const pr=pa.linhas.find(x=>String(x[0])===String(pid));if(pr){cod=cod||v(pa,pr,'Código');desc=desc||v(pa,pr,'Descrição');}}
+  return {cod:cod&&cod!=='—'?cod:'',desc,pid};
+}
 function lCompras(V){
-  const a=aba('Compras');
+  const a=aba('Compras');const car=carGet();
+  const chaves=new Set(a.linhas.map(r=>carChave(a,r)));
+  Object.keys(car).forEach(k=>{if(!chaves.has(k))delete car[k];});carSet(car);   // tira do carrinho o que saiu da planilha
+  const modo=!!S.carModo;
   const L=a.linhas.map((r,i)=>[r,i]).filter(([r])=>(!S.chip||v(a,r,'Status')===S.chip)&&busca(r.join(' ')));
-  V.innerHTML='<div class="bar"><span>'+L.length+' itens</span></div><div class="list">'+L.slice(0,S.lim).map(([r,i])=>{const st=v(a,r,'Status');
-    return '<button class="card" data-c="'+i+'"><div class="ci"><div class="cd">'+esc(v(a,r,'Descrição'))+'</div><div class="cc">'+esc(v(a,r,'Código'))+'</div><div class="cm">'+esc(v(a,r,'Loja'))+' · '+esc(br(v(a,r,'Data')))+'</div></div><div class="rt">'+esc(v(a,r,'Qtd'))+'<div><span class="tag '+(st==='A pedir'?'w':st==='Recebido'?'':'')+'">'+esc(st)+'</span></div></div></button>';}).join('')+'</div>'+mais(L.length);
-  V.querySelector('.list').onclick=e=>{const c=e.target.closest('[data-c]');if(c)detCompra(+c.dataset.c);};
+  const nSel=Object.keys(car).length;
+  V.innerHTML='<div class="bar"><span>'+L.length+' itens</span><span class="btns" style="margin:0;gap:6px">'+
+      (modo?'<button class="btn" id="carTodos">Marcar todos "A pedir"</button><button class="btn p" id="carSair">✓ Concluir seleção</button>':'<button class="btn p" id="carAbre">🛒 Carrinho'+(nSel?' ('+nSel+')':'')+'</button>')+'</span></div>'+
+    (modo?'<div class="note" style="margin:0 0 8px">Toque nos itens para colocar ou tirar do carrinho. Ajuste a quantidade se precisar e gere o PDF para o financeiro.</div>':'')+
+    '<div class="list">'+L.slice(0,S.lim).map(([r,i])=>{const st=v(a,r,'Status');const k=carChave(a,r);const sel=car[k]!=null;const pc=carPeca(a,r);
+    return '<button class="card'+(sel?' carsel':'')+'" data-c="'+i+'">'+(modo||sel?'<div class="carck">'+(sel?'✓':'')+'</div>':'')+'<div class="ci"><div class="cd">'+esc(pc.desc)+'</div><div class="cc">'+esc(pc.cod||'sem código')+'</div><div class="cm">'+esc(v(a,r,'Loja'))+' · '+esc(br(v(a,r,'Data')))+'</div>'+
+      (modo&&sel?'<div class="carq" data-q="'+i+'">Qtd no pedido: <input class="f" inputmode="decimal" value="'+esc(car[k])+'"></div>':'')+
+      '</div><div class="rt">'+esc(v(a,r,'Qtd'))+'<div><span class="tag '+(st==='A pedir'?'w':'')+'">'+esc(st)+'</span></div></div></button>';}).join('')+'</div>'+mais(L.length);
+  const lista=V.querySelector('.list');
+  lista.onclick=e=>{
+    if(e.target.closest('.carq'))return;
+    const c=e.target.closest('[data-c]');if(!c)return;const i=+c.dataset.c;
+    if(!S.carModo){detCompra(i);return;}
+    const r=a.linhas[i];const k=carChave(a,r);const o=carGet();
+    if(o[k]!=null)delete o[k];else o[k]=v(a,r,'Qtd')||'1';
+    carSet(o);const y=scrollY;render();scrollTo(0,y);
+  };
+  lista.oninput=e=>{const q=e.target.closest('.carq');if(!q)return;const r=a.linhas[+q.dataset.q];const o=carGet();o[carChave(a,r)]=e.target.value;carSet(o);carBarra();};
+  const ab=$('#carAbre');if(ab)ab.onclick=()=>{S.carModo=true;if(!S.chip)S.chip='A pedir';render();};
+  const sa=$('#carSair');if(sa)sa.onclick=()=>{S.carModo=false;render();};
+  const to=$('#carTodos');if(to)to.onclick=()=>{const o=carGet();a.linhas.forEach(r=>{if(v(a,r,'Status')==='A pedir'){const k=carChave(a,r);if(o[k]==null)o[k]=v(a,r,'Qtd')||'1';}});carSet(o);render();};
+  carBarra();
+}
+function carBarra(){
+  let b=$('#carbar');const n=Object.keys(carGet()).length;
+  if(S.tab!=='compras'||!n){if(b)b.remove();if(!$('#selbar'))document.body.classList.remove('comsel');return;}
+  if(!b){b=document.createElement('div');b.id='carbar';b.className='selbar';document.body.appendChild(b);}
+  document.body.classList.add('comsel');
+  b.innerHTML='<div class="wrap"><b>🛒 '+n+(n>1?' itens':' item')+' no carrinho</b><span style="flex:1"></span><button class="btn" id="cbLimpa">Limpar</button>'+(podeLancar()?'<button class="btn" id="cbPed">Marcar como "Pedido"</button>':'')+'<button class="btn p" id="cbPdf">📄 Gerar PDF</button></div>';
+  $('#cbLimpa').onclick=()=>{if(!confirmar('Tirar todos os itens do carrinho?'))return;carSet({});render();};
+  $('#cbPdf').onclick=pdfCarrinho;
+  const pe=$('#cbPed');if(pe)pe.onclick=async()=>{
+    const a=aba('Compras');const o=carGet();const its=a.linhas.map((r,i)=>[r,i]).filter(([r])=>o[carChave(a,r)]!=null);
+    if(!confirmar('Marcar os '+its.length+' itens do carrinho como "Pedido" na planilha e esvaziar o carrinho?'))return;
+    for(const [r,i] of its){if(v(a,r,'Status')==='Pedido')continue;const conferir={};const ip=col(a.cab,'ID peça','ID');const ic=col(a.cab,'Código');if(ip>=0)conferir[a.cab[ip]]=r[ip];if(ic>=0)conferir[a.cab[ic]]=r[ic];
+      await enfileira({tipo:'atualizar',aba:'Compras',linha:aCompraLinha(i),idx:i,conferir,campos:{Status:'Pedido'}});}
+    carSet({});S.carModo=false;toast(its.length+' itens marcados como Pedido');renderLista();
+  };
+}
+function pdfCarrinho(){
+  const a=aba('Compras');const o=carGet();
+  const its=a.linhas.filter(r=>o[carChave(a,r)]!=null);
+  if(!its.length){toast('O carrinho está vazio');return;}
+  const semCod=its.filter(r=>!carPeca(a,r).cod).length;
+  if(semCod&&!confirmar(semCod+' item(ns) do carrinho estão sem código. Gerar o PDF mesmo assim?'))return;
+  const agora=new Date();const num='CC-'+agora.getFullYear()+String(agora.getMonth()+1).padStart(2,'0')+String(agora.getDate()).padStart(2,'0')+'-'+String(agora.getHours()).padStart(2,'0')+String(agora.getMinutes()).padStart(2,'0');
+  $('#print').innerHTML='<h1>Solicitação de compra · '+esc(num)+'</h1><div class="meta">PCM · '+its.length+' item(ns) · emitida em '+esc(agora.toLocaleString('pt-BR'))+' por '+esc(S.user.nome)+'</div>'+
+    '<div class="meta"><b>Atenção:</b> conferir o <b>código</b> de cada item antes de fazer o pedido. A descrição é a da peça no PCM.</div>'+
+    '<table><thead><tr><th style="width:4%">Nº</th><th style="width:20%">Código da peça</th><th>Descrição</th><th style="width:7%">Qtd</th><th style="width:14%">Fornecedor / loja</th><th style="width:18%">Observação</th></tr></thead><tbody>'+
+    its.map((r,n)=>{const pc=carPeca(a,r);const lk=v(a,r,'Link');return '<tr><td>'+(n+1)+'</td><td style="font:700 13px/1.3 Consolas,monospace">'+esc(pc.cod||'— sem código —')+(pc.pid?'<br><small style="font-weight:400">ID PCM: '+esc(pc.pid)+'</small>':'')+'</td><td>'+esc(pc.desc)+'</td><td style="text-align:center;font-weight:700">'+esc(o[carChave(a,r)])+'</td><td>'+esc(v(a,r,'Loja'))+(lk?'<br><small style="word-break:break-all">'+esc(lk)+'</small>':'')+'</td><td>'+esc(v(a,r,'Observação'))+'</td></tr>';}).join('')+'</tbody></table>'+
+    '<div class="ass"><div>Solicitante (Manutenção)</div><div>Aprovação</div><div>Financeiro / Compras</div></div>';
+  pdfAbrir('Solicitacao_compra_'+num);
 }
 function detCompra(i){
   const a=aba('Compras');const r=a.linhas[i];if(!r)return;const link=v(a,r,'Link');
