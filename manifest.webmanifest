@@ -1,6 +1,6 @@
 {
-  "name": "PCM Linha de Abate",
-  "short_name": "PCM Manutenção",
+  "name": "Mel.B System",
+  "short_name": "Mel.B System",
   "description": "Peças, manutenção, histórico e compras da linha de abate – funciona sem internet.",
   "start_url": "./",
   "scope": "./",
