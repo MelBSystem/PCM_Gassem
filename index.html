@@ -367,9 +367,9 @@ function render(){
   $('#ttl').textContent=nomeTela(S.tab);aplicaNomes();
   $('#q').hidden=S.tab==='mais';
   const fab=$('#fab');
-  const fl={hist:'+ Registro',compras:'+ Item',check:S.ckModo==='itens'?'+ Item':'',led:'+ Troca',manual:isAdm()&&!S.mSel?'+ Tarefa':''}[S.tab];
+  const fl={manut:{corr:'+ Corretiva',prev:'+ Preventiva',hist:'+ Registro'}[S.mAba||'corr'],hist:'+ Registro',compras:'+ Item',check:S.ckModo==='itens'?'+ Item':'',led:'+ Troca',manual:isAdm()&&!S.mSel?'+ Tarefa':''}[S.tab];
   fab.hidden=!(fl&&podeLancar());fab.textContent=fl||'';
-  fab.onclick=S.tab==='hist'?()=>formHist():S.tab==='compras'?()=>formCompra():S.tab==='check'?()=>formCkItem():S.tab==='led'?()=>formLed():S.tab==='manual'?()=>formTarefa():null;
+  fab.onclick=S.tab==='manut'?()=>formHist({corr:'Corretiva',prev:'Preventiva'}[S.mAba||'corr']):S.tab==='hist'?()=>formHist():S.tab==='compras'?()=>formCompra():S.tab==='check'?()=>formCkItem():S.tab==='led'?()=>formLed():S.tab==='manual'?()=>formTarefa():null;
   chips();renderLista();
 }
 function chips(){
@@ -520,9 +520,24 @@ function todosEquip(){const L=[[MN,'Equipamento'],['Peças','Equipamento'],['man
 function fechados(){return new Set(ls.get('pcm_mfech')||[]);}
 function setFechados(f){ls.set('pcm_mfech',[...f]);}
 function proxIdMN(extra){const a=aba(MN);let m=0;a.linhas.forEach(r=>{const x=String(r[0]).match(/^MP(\d+)$/);if(x)m=Math.max(m,+x[1]);});return 'MP'+String(m+1+(extra||0)).padStart(3,'0');}
+const MANUT_ABAS=[['corr','Manutenção Corretiva'],['prev','Manutenção Preventiva'],['hist','Histórico de Manutenção']];
 function lManutNova(V){
-  V.innerHTML='<div class="empty" style="padding-top:60px"><div style="font-size:34px">🛠️</div><b>Manutenção</b><br>Esta página está sendo preparada.<br><br>As tarefas dos manuais estão em<br><b>Mais → 📘 Manutenção segundo o Manual</b>.</div><div class="btns" style="justify-content:center"><button class="btn" id="irManual">Abrir Manutenção segundo o Manual</button></div>';
-  $('#irManual').onclick=abreManual;
+  const m=S.mAba||'corr';const a=aba('Histórico');
+  let L=a.linhas.map((r,i)=>[r,i]);
+  if(m!=='hist'){const alvo=m==='corr'?'corret':'prevent';L=L.filter(([r])=>norm(v(a,r,'Tipo')).includes(alvo));}
+  L=L.filter(([r])=>busca(r.join(' '))).reverse();
+  const mes=hoje().slice(0,7);const doMes=L.filter(([r])=>{const d=String(v(a,r,'Data'));return d.startsWith(mes)||(/^\d{2}\/\d{2}\/\d{4}/.test(d)&&d.slice(6,10)+'-'+d.slice(3,5)===mes);});
+  const parado=L.reduce((s,[r])=>s+num(v(a,r,'Tempo parado','Tempo')),0);
+  let h='<div class="seg">'+MANUT_ABAS.map(([k,t])=>'<button data-ma="'+k+'" aria-pressed="'+(m===k)+'">'+esc(t)+'</button>').join('')+'</div>'+
+    '<div class="sum"><div><b>'+L.length+'</b><span>registros</span></div><div><b>'+doMes.length+'</b><span>neste mês</span></div><div><b>'+Math.round(parado)+'</b><span>min parado</span></div></div>';
+  h+=L.length?'<div class="list">'+L.slice(0,S.lim).map(([r,i])=>'<button class="card" data-h="'+i+'"><div class="ci"><div class="cd">'+esc(v(a,r,'Defeito','Descrição','Serviço','Tarefa'))+'</div><div class="cm">'+esc(br(v(a,r,'Data')))+' · '+esc(v(a,r,'Equipamento'))+(v(a,r,'Área')?' · '+esc(v(a,r,'Área')):'')+'</div><div class="cm">'+esc(v(a,r,'Ação'))+'</div></div><div class="rt"><span class="tag '+(norm(v(a,r,'Tipo')).includes('corret')?'w':'')+'">'+esc(v(a,r,'Tipo')||'—')+'</span>'+(num(v(a,r,'Tempo parado','Tempo'))?'<div class="cm">'+esc(v(a,r,'Tempo parado','Tempo'))+' min</div>':'')+'</div></button>').join('')+'</div>'+mais(L.length)
+    :'<div class="empty">'+(m==='hist'?'Nenhum registro de manutenção ainda.':'Nenhuma manutenção '+(m==='corr'?'corretiva':'preventiva')+' registrada.')+(podeLancar()&&m!=='hist'?'<br>Toque em <b>'+(m==='corr'?'+ Corretiva':'+ Preventiva')+'</b> para registrar.':'')+'</div>';
+  V.innerHTML=h;
+  V.onclick=e=>{
+    const t=e.target.closest('[data-ma]');if(t){S.mAba=t.dataset.ma;S.lim=40;render();return;}
+    const c=e.target.closest('[data-h]');if(!c)return;const r=a.linhas[+c.dataset.h];
+    abre('<div class="ph"><b>'+esc(v(a,r,'Tipo')||'Registro')+'</b><button class="lnk" data-x>Fechar</button></div><div class="kv">'+a.cab.map((cc,i)=>r[i]!==''?'<b>'+esc(cc)+'</b><span>'+esc(r[i])+'</span>':'').join('')+'</div>');
+  };
 }
 function abreManual(){S.mSel=null;S.eqSel=null;S.tab='manual';S.q='';S.chip='';S.lim=40;$('#q').value='';scrollTo(0,0);render();}
 function lManut(V){
@@ -689,10 +704,10 @@ function lHist(V){
   V.innerHTML='<div class="bar"><span>'+L.length+' registros</span></div><div class="list">'+L.slice(0,S.lim).map((r)=>'<button class="card" data-h="'+a.linhas.indexOf(r)+'"><div class="ci"><div class="cd">'+esc(v(a,r,'Defeito','Descrição','Serviço','Tarefa'))+'</div><div class="cm">'+esc(br(v(a,r,'Data')))+' · '+esc(v(a,r,'Equipamento'))+'</div><div class="cm">'+esc(v(a,r,'Ação'))+'</div></div><div class="rt"><span class="tag '+(norm(v(a,r,'Tipo')).includes('corret')?'w':'')+'">'+esc(v(a,r,'Tipo')||'—')+'</span></div></button>').join('')+'</div>'+mais(L.length);
   V.querySelector('.list').onclick=e=>{const c=e.target.closest('[data-h]');if(!c)return;const r=a.linhas[+c.dataset.h];abre('<div class="ph"><b>Registro</b><button class="lnk" data-x>Fechar</button></div><div class="kv">'+a.cab.map((cc,i)=>r[i]!==''?'<b>'+esc(cc)+'</b><span>'+esc(r[i])+'</span>':'').join('')+'</div>');};
 }
-function formHist(){
+function formHist(tipoPre){
   const eqs=[...new Set(aba('Manutenção').linhas.map(r=>v(aba('Manutenção'),r,'Equipamento')).concat(aba('Peças').linhas.map(r=>v(aba('Peças'),r,'Equipamento')),aba('manuais_pecas').linhas.map(r=>v(aba('manuais_pecas'),r,'Equipamento'))).filter(Boolean))].sort();
-  abre('<div class="ph"><b>Novo registro</b><button class="lnk" data-x>Fechar</button></div>'+
-    '<div class="two"><div><label>Data</label><input id="hD" class="f" type="date" value="'+hoje()+'"></div><div><label>Tipo</label><select id="hT" class="f"><option>Corretiva</option><option>Preventiva</option><option>Preditiva</option><option>Melhoria</option></select></div></div>'+
+  abre('<div class="ph"><b>'+(tipoPre?'Nova manutenção '+tipoPre.toLowerCase():'Novo registro')+'</b><button class="lnk" data-x>Fechar</button></div>'+
+    '<div class="two"><div><label>Data</label><input id="hD" class="f" type="date" value="'+hoje()+'"></div><div><label>Tipo</label><select id="hT" class="f">'+['Corretiva','Preventiva','Preditiva','Melhoria'].map(t=>'<option'+(t===tipoPre?' selected':'')+'>'+t+'</option>').join('')+'</select></div></div>'+
     '<label>Equipamento</label><input id="hE" class="f" list="dlEq"><datalist id="dlEq">'+eqs.map(e=>'<option value="'+esc(e)+'">').join('')+'</datalist>'+
     '<label>Área</label><select id="hA" class="f"><option>Mecânica</option><option>Elétrica</option><option>Lubrificação</option><option>Operacional</option></select>'+
     '<label>Defeito / serviço</label><textarea id="hDf" class="f"></textarea><label>Ação realizada</label><textarea id="hAc" class="f"></textarea>'+
@@ -921,11 +936,11 @@ function pdfLed(mes,L){
 async function lMais(V){
   const k=aba('Kits');const nf=S.fila;
   const imgs=Object.keys(S.img).length;
-  V.innerHTML='<div class="box"><b>'+esc(S.user.nome)+'</b><div class="note">Perfil: '+esc(S.user.perfil)+'</div><div class="btns">'+'<button class="btn" id="mHist">📋 Histórico</button><button class="btn" id="mManual">📘 Manutenção segundo o Manual</button>'+(isAdm()?'<button class="btn" id="mUsu">👥 Usuários</button><button class="btn" id="mNomes">✏️ Renomear abas e campos</button>':'')+'<button class="btn" id="mSair">Sair</button></div></div>'+
+  V.innerHTML='<div class="box"><b>'+esc(S.user.nome)+'</b><div class="note">Perfil: '+esc(S.user.perfil)+'</div><div class="btns">'+'<button class="btn" id="mManual">📘 Manutenção segundo o Manual</button>'+(isAdm()?'<button class="btn" id="mUsu">👥 Usuários</button><button class="btn" id="mNomes">✏️ Renomear abas e campos</button>':'')+'<button class="btn" id="mSair">Sair</button></div></div>'+
     '<div class="box"><b>Dados no celular</b><div class="note">'+Object.keys(S.d.abas).map(n=>esc(n)+': '+S.d.abas[n].linhas.length).join(' · ')+'</div><div class="note">Imagens guardadas: '+imgs+'</div><div class="note">Lançamentos aguardando envio: '+nf+'</div><div class="btns"><button class="btn" id="mFila">Ver fila</button><button class="btn" id="mImg">Baixar imagens de novo</button></div></div>'+
     (k.linhas.length?'<div class="box"><b>Kits</b>'+kitsHtml(k)+'</div>':'')+
     '<div class="note" style="text-align:center;margin:16px 0">PCM Gassen · app v'+esc(CONFIG.VERSAO)+'</div>';
-  $('#mSair').onclick=sair;$('#mManual').onclick=abreManual;if(isAdm()){$('#mNomes').onclick=()=>formNomes();$('#mUsu').onclick=()=>telaUsuarios();}$('#mHist').onclick=()=>{S.tab='hist';S.chip='';S.q='';$('#q').value='';render();};$('#mImg').onclick=()=>{baixaImagens(true);toast('Baixando imagens…');};
+  $('#mSair').onclick=sair;$('#mManual').onclick=abreManual;if(isAdm()){$('#mNomes').onclick=()=>formNomes();$('#mUsu').onclick=()=>telaUsuarios();}$('#mImg').onclick=()=>{baixaImagens(true);toast('Baixando imagens…');};
   $('#mFila').onclick=async()=>{const f=(await all('fila')).map(x=>x[1]).sort((a,b)=>a.ts-b.ts);abre('<div class="ph"><b>Fila de envio</b><button class="lnk" data-x>Fechar</button></div>'+(f.length?f.map(o=>'<div class="card" style="cursor:default"><div class="ci"><div class="cd">'+esc(o.tipo)+' · '+esc(o.aba||'imagem')+' '+esc(o.id||'')+'</div><div class="cm">'+new Date(o.ts).toLocaleString('pt-BR')+(o.erro?' · <span class="tag c">'+esc(o.erro)+'</span>':'')+'</div></div><button class="lnk" data-del="'+o.uid+'">Descartar</button></div>').join(''):'<div class="empty">Nada pendente.</div>'));
     $('#pane').querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{if(!confirmar('Descartar este lançamento? Ele não será enviado.'))return;await del('fila',b.dataset.del);S.fila=await count('fila');status();b.closest('.card').remove();});};
 }
