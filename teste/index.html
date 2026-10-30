@@ -6,7 +6,7 @@
 <meta name="theme-color" content="#9a5b00">
 <meta name="robots" content="noindex, nofollow, noarchive">
 <meta name="referrer" content="no-referrer">
-<title>PCM Manutenção · TESTE Equipamentos</title>
+<title>Mel.B System · TESTE Equipamentos</title>
 <link rel="icon" href="../icons/icon-192.png">
 <style>
 :root{--bg:#f3f4f1;--sf:#fff;--fg:#1c201e;--mu:#5c655e;--ln:#dde1dc;--ac:#0b6e4f;--ac2:#e5f2ec;--wa:#9a5b00;--wa2:#fdf1dc;--cr:#b3261e;--cr2:#fbe7e5;--r:12px}
@@ -100,7 +100,7 @@ async function carrega(){
   try{
     PCM=await new Promise((ok,ko)=>{const r=indexedDB.open('pcm-gassen');r.onupgradeneeded=ev=>{ev.target.transaction.abort();};r.onerror=()=>ok(null);r.onsuccess=()=>{const db=r.result;if(!db.objectStoreNames.contains('kv')){ok(null);return;}const t=db.transaction('kv','readonly').objectStore('kv').get('dados');t.onsuccess=()=>ok(t.result||null);t.onerror=()=>ok(null);};});
   }catch(e){PCM=null;}
-  $('#stx').textContent=PCM?'Dados do PCM: cópia do app neste aparelho · planilha elétrica: planta nova (Sulmaq)':'Abra o app PCM Manutenção e entre uma vez neste aparelho para ver peças e manutenções aqui.';
+  $('#stx').textContent=PCM?'Dados do PCM: cópia do app neste aparelho · planilha elétrica: planta nova (Sulmaq)':'Abra o app Mel.B System e entre uma vez neste aparelho para ver peças e manutenções aqui.';
   indexa();render();
 }
 /* índices de ligação */
