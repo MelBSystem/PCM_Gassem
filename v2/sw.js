@@ -1,5 +1,5 @@
 // Service worker do PCM Gassen: guarda o app no celular para abrir sem internet.
-const CACHE = 'pcm2-gassen-v2.1.0';
+const CACHE = 'pcm2-gassen-v2.2.0';
 const ARQS = ['./', 'index.html', 'config.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(ARQS)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k.startsWith('pcm2-') && k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
