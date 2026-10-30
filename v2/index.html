@@ -445,7 +445,7 @@ function ligaMais(){const m=$('#mais');if(m)m.onclick=()=>{S.lim+=40;renderLista
 function renderLista(){
   const V=$('#view');
   if(!S.d){V.innerHTML='<div class="empty">Sem dados. Toque em ↻ Sincronizar com internet.</div>';return;}
-  V.onclick=null;const sb=$('#selbar');if(sb&&!(S.tab==='manual'&&S.mSel)){sb.remove();document.body.classList.remove('comsel');}if(S.tab!=='compras'){S.carModo=false;const cb=$('#carbar');if(cb){cb.remove();document.body.classList.remove('comsel');}}
+  V.onclick=null;const sb=$('#selbar');if(sb&&!(S.tab==='manual'&&S.mSel)){sb.remove();document.body.classList.remove('comsel');}if(S.tab!=='compras'){S.carModo=false;S.recModo=false;const rb=$('#recbar');if(rb)rb.remove();const cb=$('#carbar');if(cb){cb.remove();document.body.classList.remove('comsel');}}
   ({equip:lEquip,pecas:lPecas,serras:lSerras,manut:lManutNova,manual:lManut,hist:lHist,compras:lCompras,mais:lMais,check:lCheck,led:lLed})[S.tab](V);
   aplicaRotulos(V);ligaMais();
 }
@@ -918,11 +918,12 @@ function lCompras(V){
   const a=aba('Compras');const car=carGet();
   const chaves=new Set(a.linhas.map(r=>carChave(a,r)));
   Object.keys(car).forEach(k=>{if(!chaves.has(k))delete car[k];});carSet(car);   // tira do carrinho o que saiu da planilha
+  if(S.recModo){lRecebe(V,a);return;}
   const modo=!!S.carModo;
   const L=a.linhas.map((r,i)=>[r,i]).filter(([r])=>(!S.chip||v(a,r,'Status')===S.chip)&&busca(r.join(' ')));
   const nSel=Object.keys(car).length;
   V.innerHTML='<div class="bar"><span>'+L.length+' itens</span><span class="btns" style="margin:0;gap:6px">'+
-      (modo?'<button class="btn" id="carTodos">Marcar todos "A pedir"</button><button class="btn p" id="carSair">✓ Concluir seleção</button>':'<button class="btn p" id="carAbre">🛒 Carrinho'+(nSel?' ('+nSel+')':'')+'</button>')+'</span></div>'+
+      (modo?'<button class="btn" id="carTodos">Marcar todos "A pedir"</button><button class="btn p" id="carSair">✓ Concluir seleção</button>':(podeLancar()&&a.linhas.some(r=>v(a,r,'Status')==='Pedido')?'<button class="btn" id="recAbre">📦 Conferir recebimento ('+a.linhas.filter(r=>v(a,r,'Status')==='Pedido').length+')</button>':'')+'<button class="btn p" id="carAbre">🛒 Carrinho'+(nSel?' ('+nSel+')':'')+'</button>')+'</span></div>'+
     (modo?'<div class="note" style="margin:0 0 8px">Toque nos itens para colocar ou tirar do carrinho. Ajuste a quantidade se precisar e gere o PDF para o financeiro.</div>':'')+
     '<div class="list">'+L.slice(0,S.lim).map(([r,i])=>{const st=v(a,r,'Status');const k=carChave(a,r);const sel=car[k]!=null;const pc=carPeca(a,r);
     return '<button class="card'+(sel?' carsel':'')+'" data-c="'+i+'">'+(modo||sel?'<div class="carck">'+(sel?'✓':'')+'</div>':'')+'<div class="ci"><div class="cd">'+esc(pc.desc)+'</div><div class="cc">'+esc(pc.cod||'sem código')+'</div><div class="cm">'+esc(v(a,r,'Loja'))+' · '+esc(br(v(a,r,'Data')))+'</div>'+
@@ -940,10 +941,65 @@ function lCompras(V){
   lista.oninput=e=>{const q=e.target.closest('.carq');if(!q)return;const r=a.linhas[+q.dataset.q];const o=carGet();o[carChave(a,r)]=e.target.value;carSet(o);carBarra();};
   const ab=$('#carAbre');if(ab)ab.onclick=()=>{S.carModo=true;if(!S.chip)S.chip='A pedir';render();};
   const sa=$('#carSair');if(sa)sa.onclick=()=>{S.carModo=false;render();};
+  const ra=$('#recAbre');if(ra)ra.onclick=()=>{S.recModo=true;S.carModo=false;S.chip='Pedido';S.rec={};render();};
   const to=$('#carTodos');if(to)to.onclick=()=>{const o=carGet();a.linhas.forEach(r=>{if(v(a,r,'Status')==='A pedir'){const k=carChave(a,r);if(o[k]==null)o[k]=v(a,r,'Qtd')||'1';}});carSet(o);render();};
   carBarra();
 }
+/* ---------- conferência de recebimento (itens "Pedido") ---------- */
+function recPecaDe(a,r){                      // aba + ID da peça para somar no estoque
+  let pid=v(a,r,'ID peça','ID');const cod=v(a,r,'Código');
+  if(pid){const ab=/^M\d+$/.test(pid)?'manuais_pecas':'Peças';if(aba(ab).linhas.some(x=>String(x[0])===String(pid)))return {ab,pid};}
+  if(cod){for(const ab of ['Peças','manuais_pecas']){const pa=aba(ab);const pr=pa.linhas.find(x=>norm(v(pa,x,'Código'))===norm(cod));if(pr)return {ab,pid:String(pr[0])};}}
+  return null;
+}
+function lRecebe(V,a){
+  if(!S.rec)S.rec={};
+  const L=a.linhas.map((r,i)=>[r,i]).filter(([r])=>v(a,r,'Status')==='Pedido'&&busca(r.join(' ')));
+  V.innerHTML='<div class="bar"><span>'+L.length+' itens pedidos</span><span class="btns" style="margin:0;gap:6px"><button class="btn" id="recTodos">Marcar todos como chegou</button><button class="btn" id="recSair">Cancelar</button></span></div>'+
+    '<div class="note" style="margin:0 0 8px">Confira cada item que chegou: marque ✓ e confirme a quantidade recebida. Ao confirmar, o status vira <b>Recebido</b> e o estoque da peça é somado automaticamente. Se chegar menos que o pedido, o restante continua como <b>Pedido</b>.</div>'+
+    (L.length?'<div class="list">'+L.map(([r,i])=>{const pc=carPeca(a,r);const sel=S.rec[i]!=null;const alvo=recPecaDe(a,r);
+      return '<div class="card'+(sel?' carsel':'')+'" data-r="'+i+'" style="cursor:pointer"><div class="carck">'+(sel?'✓':'')+'</div><div class="ci"><div class="cd">'+esc(pc.desc)+'</div><div class="cc">'+esc(pc.cod||'sem código')+'</div><div class="cm">Pedido: <b>'+esc(v(a,r,'Qtd'))+'</b> · '+esc(v(a,r,'Loja')||'—')+(alvo?' · estoque atual '+esc(v(aba(alvo.ab),aba(alvo.ab).linhas.find(x=>String(x[0])===alvo.pid),'Estoque atual')||'0'):' · <span style="color:var(--cr)">peça não cadastrada (estoque não será somado)</span>')+'</div>'+
+        (sel?'<div class="carq" data-q="'+i+'">Qtd recebida: <input class="f" inputmode="decimal" value="'+esc(S.rec[i])+'"></div>':'')+'</div></div>';}).join('')+'</div>'
+      :'<div class="empty">Nenhum item com status "Pedido".</div>');
+  const lista=V.querySelector('.list');
+  if(lista){
+    lista.onclick=e=>{if(e.target.closest('.carq'))return;const c=e.target.closest('[data-r]');if(!c)return;const i=+c.dataset.r;if(S.rec[i]!=null)delete S.rec[i];else S.rec[i]=v(a,a.linhas[i],'Qtd')||'1';const y=scrollY;render();scrollTo(0,y);};
+    lista.oninput=e=>{const q=e.target.closest('.carq');if(q)S.rec[+q.dataset.q]=e.target.value;};
+  }
+  $('#recTodos').onclick=()=>{L.forEach(([r,i])=>{if(S.rec[i]==null)S.rec[i]=v(a,r,'Qtd')||'1';});render();};
+  $('#recSair').onclick=()=>{S.recModo=false;S.rec={};render();};
+  recBarra(a);
+}
+function recBarra(a){
+  let b=$('#recbar');const n=Object.keys(S.rec||{}).length;
+  const cb=$('#carbar');if(cb)cb.remove();
+  if(!S.recModo||!n){if(b)b.remove();document.body.classList.remove('comsel');return;}
+  if(!b){b=document.createElement('div');b.id='recbar';b.className='selbar';document.body.appendChild(b);}
+  document.body.classList.add('comsel');
+  b.innerHTML='<div class="wrap"><b>📦 '+n+(n>1?' itens conferidos':' item conferido')+'</b><span style="flex:1"></span><button class="btn p" id="rbOk">✓ Confirmar recebimento</button></div>';
+  $('#rbOk').onclick=()=>confirmaRecebe(a);
+}
+async function confirmaRecebe(a){
+  const its=Object.keys(S.rec).map(Number).map(i=>({i,r:a.linhas[i],q:num(S.rec[i])})).filter(x=>x.r&&v(a,x.r,'Status')==='Pedido');
+  const ruins=its.filter(x=>!(x.q>0));if(ruins.length){toast('Informe a quantidade recebida de todos os itens marcados');return;}
+  const linhas=its.map(x=>{const pc=carPeca(a,x.r);const ped=num(v(a,x.r,'Qtd'));const alvo=recPecaDe(a,x.r);return '• '+(pc.cod||'s/ código')+' — '+x.q+(x.q<ped?' de '+ped+' (parcial)':'')+(alvo?'':' (sem peça p/ estoque)');});
+  if(!confirmar('Confirmar o recebimento destes itens?\n\n'+linhas.join('\n')+'\n\nO status vai para "Recebido" (nos parciais o restante continua "Pedido") e o estoque das peças será somado.'))return;
+  const hojeBr=new Date().toLocaleDateString('pt-BR');let est=0,sem=0;
+  for(const x of its){
+    const r=x.r,i=x.i;const ped=num(v(a,r,'Qtd'));const parcial=x.q<ped;
+    const conferir={};const ip=col(a.cab,'ID peça','ID');const ic=col(a.cab,'Código');if(ip>=0)conferir[a.cab[ip]]=r[ip];if(ic>=0)conferir[a.cab[ic]]=r[ic];
+    const obs=[v(a,r,'Observação'),'Recebido '+x.q+(parcial?' de '+ped:'')+' em '+hojeBr+' por '+S.user.nome].filter(Boolean).join(' · ');
+    const campos=parcial?{Qtd:String(ped-x.q),Observação:obs}:{Status:'Recebido',Observação:obs};
+    await enfileira({tipo:'atualizar',aba:'Compras',linha:aCompraLinha(i),idx:i,conferir,campos});
+    const alvo=recPecaDe(a,r);
+    if(alvo){await enfileira({tipo:'somar',aba:alvo.ab,id:alvo.pid,campos:{'Estoque atual':x.q}});est++;}else sem++;
+  }
+  S.recModo=false;S.rec={};
+  toast(its.length+' item(ns) recebido(s) · estoque atualizado em '+est+' peça(s)'+(sem?' · '+sem+' sem peça cadastrada':''));
+  renderLista();
+}
 function carBarra(){
+  if(S.recModo)return;
   let b=$('#carbar');const n=Object.keys(carGet()).length;
   if(S.tab!=='compras'||!n){if(b)b.remove();if(!$('#selbar'))document.body.classList.remove('comsel');return;}
   if(!b){b=document.createElement('div');b.id='carbar';b.className='selbar';document.body.appendChild(b);}
@@ -955,7 +1011,7 @@ function carBarra(){
     const a=aba('Compras');const o=carGet();const its=a.linhas.map((r,i)=>[r,i]).filter(([r])=>o[carChave(a,r)]!=null);
     if(!confirmar('Marcar os '+its.length+' itens do carrinho como "Pedido" na planilha e esvaziar o carrinho?'))return;
     for(const [r,i] of its){if(v(a,r,'Status')==='Pedido')continue;const conferir={};const ip=col(a.cab,'ID peça','ID');const ic=col(a.cab,'Código');if(ip>=0)conferir[a.cab[ip]]=r[ip];if(ic>=0)conferir[a.cab[ic]]=r[ic];
-      await enfileira({tipo:'atualizar',aba:'Compras',linha:aCompraLinha(i),idx:i,conferir,campos:{Status:'Pedido'}});}
+      await enfileira({tipo:'atualizar',aba:'Compras',linha:aCompraLinha(i),idx:i,conferir,campos:{Status:'Pedido',Qtd:String(o[carChave(a,r)]||v(a,r,'Qtd'))}});}
     carSet({});S.carModo=false;toast(its.length+' itens marcados como Pedido');renderLista();
   };
 }
