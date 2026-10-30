@@ -1,6 +1,6 @@
 {
-  "name": "PCM Abate Gassen",
-  "short_name": "PCM Gassen",
+  "name": "PCM Linha de Abate",
+  "short_name": "PCM Manutenção",
   "description": "Peças, manutenção, histórico e compras da linha de abate – funciona sem internet.",
   "start_url": "./",
   "scope": "./",
