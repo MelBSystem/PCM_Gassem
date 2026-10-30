@@ -92,6 +92,8 @@ textarea.f{min-height:70px}
 .nb{font-size:10px;white-space:nowrap}
 .seg{display:flex;gap:6px;margin:10px 0 4px}
 .seg button{flex:1;border:1px solid var(--ln);background:var(--sf);border-radius:10px;padding:8px 4px;font-size:13px;cursor:pointer}
+.seg4 button{line-height:1.2}
+@media (max-width:620px){.seg4{flex-wrap:wrap}.seg4 button{flex:1 1 45%}}
 .seg button[aria-pressed=true]{background:var(--ac2);border-color:var(--ac);color:var(--ac);font-weight:700}
 .grp{font-size:12px;font-weight:700;color:var(--mu);text-transform:uppercase;letter-spacing:.04em;margin:14px 2px 6px}
 .ck{background:var(--sf);border:1px solid var(--ln);border-radius:var(--r);padding:10px;margin-bottom:8px;scroll-margin-bottom:150px;scroll-margin-top:150px}
@@ -371,9 +373,9 @@ function render(){
   $('#ttl').textContent=S.tab==='equip'&&S.eqSel?'← '+S.eqSel:nomeTela(S.tab);aplicaNomes();
   $('#q').hidden=S.tab==='mais';
   const fab=$('#fab');
-  const fl={manut:{corr:'+ Corretiva',prev:'+ Preventiva',hist:'+ Registro'}[S.mAba||'corr'],hist:'+ Registro',compras:'+ Item',check:S.ckModo==='itens'?'+ Item':'',led:'+ Troca',manual:isAdm()&&!S.mSel?'+ Tarefa':''}[S.tab];
+  const fl={manut:{corr:'+ Corretiva',prev:'+ Preventiva',led:'+ Troca',hist:'+ Registro'}[S.mAba||'corr'],hist:'+ Registro',compras:'+ Item',check:S.ckModo==='itens'?'+ Item':'',led:'+ Troca',manual:isAdm()&&!S.mSel?'+ Tarefa':''}[S.tab];
   fab.hidden=!(fl&&podeLancar());fab.textContent=fl||'';
-  fab.onclick=S.tab==='manut'?()=>formHist({corr:'Corretiva',prev:'Preventiva'}[S.mAba||'corr']):S.tab==='hist'?()=>formHist():S.tab==='compras'?()=>formCompra():S.tab==='check'?()=>formCkItem():S.tab==='led'?()=>formLed():S.tab==='manual'?()=>formTarefa():null;
+  fab.onclick=S.tab==='manut'?(S.mAba==='led'?()=>formLed():()=>formHist({corr:'Corretiva',prev:'Preventiva'}[S.mAba||'corr'])):S.tab==='hist'?()=>formHist():S.tab==='compras'?()=>formCompra():S.tab==='check'?()=>formCkItem():S.tab==='led'?()=>formLed():S.tab==='manual'?()=>formTarefa():null;
   chips();renderLista();
 }
 function chips(){
@@ -384,6 +386,7 @@ function chips(){
   if(S.tab==='compras'){c=['A pedir','Pedido','Recebido','Cancelado'];}
   if(S.tab==='check'){const set=[];aba('Checklist itens').linhas.forEach(r=>{const e=v(aba('Checklist itens'),r,'Equipamento');if(e&&set.indexOf(e)<0)set.push(e);});c=set.sort();}
   if(S.tab==='led'){c=ledMeses();}
+  if(S.tab==='manut'){c=manutMeses();}
   if(S.tab==='equip'&&!S.eqSel){c=areasEq();}
   $('#chips').hidden=!c.length;
   const edF=isAdm()&&podeLancar()&&c.length&&['pecas','serras','manual','check','equip'].includes(S.tab);
@@ -618,19 +621,72 @@ function todosEquip(){const L=[[EQ_AB,'Setor / TAG'],[MN,'Equipamento'],['Peças
 function fechados(){return new Set(ls.get('pcm2_mfech')||[]);}
 function setFechados(f){ls.set('pcm2_mfech',[...f]);}
 function proxIdMN(extra){const a=aba(MN);let m=0;a.linhas.forEach(r=>{const x=String(r[0]).match(/^MP(\d+)$/);if(x)m=Math.max(m,+x[1]);});return 'MP'+String(m+1+(extra||0)).padStart(3,'0');}
-const MANUT_ABAS=[['corr','Manutenção Corretiva'],['prev','Manutenção Preventiva'],['hist','Histórico de Manutenção']];
+/* ---- meses e relatório mensal da manutenção ---- */
+function manutMeses(){const a=aba('Histórico');const set=new Set([hoje().slice(0,7)]);a.linhas.forEach(r=>{const m=mesDe(v(a,r,'Data'));if(m)set.add(m);});const la=aba(LED_AB);la.linhas.forEach(r=>{const m=ledMesDa(la,r);if(m)set.add(m);});return [...set].sort().reverse().map(mesNome);}
+function manutMesCod(lbl){const p=String(lbl).split('/');const i=MESES.indexOf(p[0]);return i>=0?p[1]+'-'+String(i+1).padStart(2,'0'):'';}
+function relManut(mes){
+  const a=aba('Histórico');const L=a.linhas.filter(r=>mesDe(v(a,r,'Data'))===mes).sort((x,y)=>String(mesDe(v(a,x,'Data'))+v(a,x,'Data')).localeCompare(mesDe(v(a,y,'Data'))+v(a,y,'Data')));
+  const dia=d=>{d=String(d);return /^\d{4}-\d{2}-\d{2}/.test(d)?d.slice(8,10):d.slice(0,2);};L.sort((x,y)=>dia(v(a,x,'Data')).localeCompare(dia(v(a,y,'Data'))));
+  const tipos=[];L.forEach(r=>{const t=v(a,r,'Tipo')||'Outros';if(tipos.indexOf(t)<0)tipos.push(t);});
+  const ord=['Corretiva','Preventiva','Preditiva','Melhoria'];tipos.sort((x,y)=>((ord.indexOf(x)+99)%99)-((ord.indexOf(y)+99)%99));
+  const parado=L.reduce((s,r)=>s+num(v(a,r,'Tempo parado','Tempo')),0);
+  const eqs={};L.forEach(r=>{const e=v(a,r,'Equipamento')||'—';eqs[e]=(eqs[e]||0)+1;});
+  const top=Object.entries(eqs).sort((x,y)=>y[1]-x[1]).slice(0,5);
+  let h='<h1>Relatório de manutenção · '+esc(mesNome(mes))+'</h1><div class="meta">PCM Abate Gassen · '+L.length+' registros · '+tipos.map(t=>esc(t)+': '+L.filter(r=>(v(a,r,'Tipo')||'Outros')===t).length+' · ').join('')+Math.round(parado)+' min de máquina parada · '+aba(LED_AB).linhas.filter(r=>ledMesDa(aba(LED_AB),r)===mes).length+' trocas de LED · emitido em '+esc(new Date().toLocaleString('pt-BR'))+' por '+esc(S.user.nome)+'</div>';
+  if(top.length)h+='<div class="meta"><b>Equipamentos com mais registros:</b> '+top.map(([e,n])=>esc(e)+' ('+n+')').join(' · ')+'</div>';
+  if(!L.length)h+='<h2>Manutenção</h2><p>Nenhum registro de manutenção neste mês.</p>';
+  tipos.forEach(t=>{const T=L.filter(r=>(v(a,r,'Tipo')||'Outros')===t);
+    h+='<h2>Manutenção '+esc(t.toLowerCase())+' · '+T.length+'</h2><table><thead><tr><th style="width:9%">Data</th><th style="width:20%">Equipamento</th><th>Defeito / serviço</th><th>Ação realizada</th><th style="width:14%">Peças usadas</th><th style="width:7%">Parado (min)</th><th style="width:10%">Responsável</th></tr></thead><tbody>'+
+      T.map(r=>'<tr><td>'+esc(br(v(a,r,'Data')))+'</td><td><b>'+esc(v(a,r,'Equipamento'))+'</b>'+(v(a,r,'Área')?'<br><small>'+esc(v(a,r,'Área'))+'</small>':'')+'</td><td>'+esc(v(a,r,'Defeito','Descrição','Serviço'))+'</td><td>'+esc(v(a,r,'Ação'))+'</td><td>'+esc(v(a,r,'Peças'))+'</td><td>'+esc(v(a,r,'Tempo parado','Tempo'))+'</td><td>'+esc(v(a,r,'Respons','Executante','Técnico'))+'</td></tr>').join('')+'</tbody></table>';});
+  const la=aba(LED_AB);const LL=la.linhas.filter(r=>ledMesDa(la,r)===mes).sort((x,y)=>String(v(la,x,'Data')).localeCompare(String(v(la,y,'Data'))));
+  const ltot=LL.reduce((s,r)=>s+(num(v(la,r,'Qtd'))||1),0);
+  h+='<h2>Troca de refletores LED · '+LL.length+' registros · '+ltot+' refletores</h2>'+(LL.length?'<table><thead><tr><th style="width:9%">Data</th><th style="width:22%">Setor / local</th><th>Refletor</th><th style="width:7%">W</th><th style="width:6%">Qtd</th><th>Motivo</th><th style="width:12%">Responsável</th><th>Obs.</th></tr></thead><tbody>'+
+    LL.map(r=>'<tr><td>'+esc(br(v(la,r,'Data')))+'</td><td><b>'+esc(v(la,r,'Setor'))+'</b></td><td>'+esc(v(la,r,'Refletor'))+'</td><td>'+esc(v(la,r,'Potência'))+'</td><td>'+esc(v(la,r,'Qtd'))+'</td><td>'+esc(v(la,r,'Motivo'))+'</td><td>'+esc(v(la,r,'Respons'))+'</td><td>'+esc(v(la,r,'Observ'))+'</td></tr>').join('')+'</tbody></table>':'<p>Nenhuma troca de LED neste mês.</p>');
+  h+='<div class="ass"><div>Manutenção</div><div>Supervisor / PCM</div></div>';
+  return {html:h,n:L.length+LL.length};
+}
+function pdfManut(mes){const r=relManut(mes);$('#print').innerHTML=r.html;$('#print').querySelectorAll('h2').forEach(x=>x.style.cssText='font-size:14px;margin:14px 0 2px');pdfAbrir('Manutencao_'+mes.replace('-','_'));}
+async function emailManut(mes){
+  if(!navigator.onLine){toast('Conecte à internet para enviar por e-mail');return;}
+  if(!podeLancar()){toast('Seu usuário é só de consulta');return;}
+  const r=relManut(mes);
+  if(!confirmar('Enviar o relatório de '+mesNome(mes)+' ('+r.n+' registros) em PDF para o e-mail do administrador?'))return;
+  const css='body{font:11px/1.35 Arial,Helvetica,sans-serif;color:#000}h1{font-size:17px;margin:0 0 2px}h2{font-size:13px;margin:14px 0 2px}.meta{font-size:10px;color:#333;margin-bottom:6px}table{width:100%;border-collapse:collapse;margin-top:4px}th,td{border:1px solid #999;padding:3px 5px;text-align:left;vertical-align:top}th{background:#e8efe9}.ass{margin-top:28px}.ass div{display:inline-block;width:40%;margin-right:8%;border-top:1px solid #000;padding-top:4px;font-size:10px}';
+  const html='<html><head><meta charset="utf-8"><style>'+css+'</style></head><body>'+r.html+'</body></html>';
+  toast('Gerando e enviando o PDF…');
+  try{const x=await api('emailMes',{html,nome:'Manutencao_'+mes.replace('-','_'),titulo:'Relatório de manutenção '+mesNome(mes)});toast('PDF enviado para '+x.para);}
+  catch(e){toast(/autoriz|permission|permiss/i.test(e.message)?'O envio por e-mail ainda não foi autorizado no servidor':e.message);}
+}
+const MANUT_ABAS=[['corr','Manutenção Corretiva'],['prev','Manutenção Preventiva'],['led','Troca de LED'],['hist','Histórico de Manutenção']];
+function lManutLed(V,seg){
+  const a=aba(LED_AB);const mSel=S.chip?manutMesCod(S.chip):'';
+  const L=a.linhas.filter(r=>(!mSel||ledMesDa(a,r)===mSel)&&busca(r.join(' '))).slice().reverse();
+  const tot=L.reduce((s,r)=>s+(num(v(a,r,'Qtd'))||1),0);const set={};L.forEach(r=>{const k=v(a,r,'Setor')||'—';set[k]=1;});
+  V.innerHTML=seg+'<div class="btns" style="margin:6px 0 0"><button class="btn" id="rPdf">📄 PDF do mês</button><button class="btn" id="rMail">✉️ Enviar ao administrador</button><span class="note" style="align-self:center">'+esc(S.chip||('mês atual: '+mesNome(hoje().slice(0,7))))+'</span></div>'+
+    '<div class="sum"><div><b>'+tot+'</b><span>refletores trocados'+(S.chip?' em '+esc(S.chip):'')+'</span></div><div><b>'+L.length+'</b><span>registros</span></div><div><b>'+Object.keys(set).length+'</b><span>setores</span></div></div>'+
+    (L.length?'<div class="list">'+L.slice(0,S.lim).map(r=>'<button class="card" data-l="'+esc(r[0])+'"><div class="ci"><div class="cd">'+esc(v(a,r,'Setor')||'(sem setor)')+'</div><div style="font-size:14px;margin-top:2px">'+esc([v(a,r,'Refletor')?'Refletor '+v(a,r,'Refletor'):'',v(a,r,'Potência')?v(a,r,'Potência')+' W':'',v(a,r,'Motivo')].filter(Boolean).join(' · '))+'</div><div class="cm">'+esc(br(v(a,r,'Data')))+(v(a,r,'Respons')?' · '+esc(v(a,r,'Respons')):'')+(v(a,r,'Observ')?' · '+esc(v(a,r,'Observ')):'')+'</div></div><div class="rt"><span class="tag">LED</span><div class="cm">'+esc(v(a,r,'Qtd')||'1')+' un</div></div></button>').join('')+'</div>'+mais(L.length)
+      :'<div class="empty">Nenhuma troca de LED'+(S.chip?' em '+esc(S.chip):'')+'.'+(podeLancar()?'<br>Toque em <b>+ Troca</b> para registrar.':'')+'</div>');
+  $('#rPdf').onclick=()=>pdfManut(mSel||hoje().slice(0,7));
+  $('#rMail').onclick=()=>emailManut(mSel||hoje().slice(0,7));
+  V.onclick=e=>{const t=e.target.closest('[data-ma]');if(t){S.mAba=t.dataset.ma;S.lim=40;render();return;}const c=e.target.closest('[data-l]');if(c)formLed(c.dataset.l);};
+}
 function lManutNova(V){
-  const m=S.mAba||'corr';const a=aba('Histórico');
+  const m=S.mAba||'corr';
+  if(m==='led'){lManutLed(V,'<div class="seg seg4">'+MANUT_ABAS.map(([k,t])=>'<button data-ma="'+k+'" aria-pressed="'+(m===k)+'">'+esc(t)+'</button>').join('')+'</div>');return;}const a=aba('Histórico');
   let L=a.linhas.map((r,i)=>[r,i]);
   if(m!=='hist'){const alvo=m==='corr'?'corret':'prevent';L=L.filter(([r])=>norm(v(a,r,'Tipo')).includes(alvo));}
+  const mSel=S.chip?manutMesCod(S.chip):'';if(mSel)L=L.filter(([r])=>mesDe(v(a,r,'Data'))===mSel);
   L=L.filter(([r])=>busca(r.join(' '))).reverse();
   const mes=hoje().slice(0,7);const doMes=L.filter(([r])=>{const d=String(v(a,r,'Data'));return d.startsWith(mes)||(/^\d{2}\/\d{2}\/\d{4}/.test(d)&&d.slice(6,10)+'-'+d.slice(3,5)===mes);});
   const parado=L.reduce((s,[r])=>s+num(v(a,r,'Tempo parado','Tempo')),0);
-  let h='<div class="seg">'+MANUT_ABAS.map(([k,t])=>'<button data-ma="'+k+'" aria-pressed="'+(m===k)+'">'+esc(t)+'</button>').join('')+'</div>'+
-    '<div class="sum"><div><b>'+L.length+'</b><span>registros</span></div><div><b>'+doMes.length+'</b><span>neste mês</span></div><div><b>'+Math.round(parado)+'</b><span>min parado</span></div></div>';
+  let h='<div class="seg seg4">'+MANUT_ABAS.map(([k,t])=>'<button data-ma="'+k+'" aria-pressed="'+(m===k)+'">'+esc(t)+'</button>').join('')+'</div>'+
+    '<div class="btns" style="margin:6px 0 0"><button class="btn" id="rPdf">📄 PDF do mês</button><button class="btn" id="rMail">✉️ Enviar ao administrador</button><span class="note" style="align-self:center">'+esc(S.chip||('mês atual: '+mesNome(hoje().slice(0,7))))+'</span></div>'+
+    '<div class="sum"><div><b>'+L.length+'</b><span>registros'+(S.chip?' em '+esc(S.chip):'')+'</span></div><div><b>'+doMes.length+'</b><span>neste mês</span></div><div><b>'+Math.round(parado)+'</b><span>min parado</span></div></div>';
   h+=L.length?'<div class="list">'+L.slice(0,S.lim).map(([r,i])=>'<button class="card" data-h="'+i+'"><div class="ci"><div class="cd">'+esc(v(a,r,'Equipamento')||'(sem equipamento)')+'</div><div style="font-size:14px;margin-top:2px">'+esc(v(a,r,'Defeito','Descrição','Serviço','Tarefa'))+'</div><div class="cm">'+esc(br(v(a,r,'Data')))+(v(a,r,'Área')?' · '+esc(v(a,r,'Área')):'')+(v(a,r,'Ação')?' · '+esc(v(a,r,'Ação')):'')+'</div></div><div class="rt"><span class="tag '+(norm(v(a,r,'Tipo')).includes('corret')?'w':'')+'">'+esc(v(a,r,'Tipo')||'—')+'</span>'+(num(v(a,r,'Tempo parado','Tempo'))?'<div class="cm">'+esc(v(a,r,'Tempo parado','Tempo'))+' min</div>':'')+'</div></button>').join('')+'</div>'+mais(L.length)
     :'<div class="empty">'+(m==='hist'?'Nenhum registro de manutenção ainda.':'Nenhuma manutenção '+(m==='corr'?'corretiva':'preventiva')+' registrada.')+(podeLancar()&&m!=='hist'?'<br>Toque em <b>'+(m==='corr'?'+ Corretiva':'+ Preventiva')+'</b> para registrar.':'')+'</div>';
   V.innerHTML=h;
+  $('#rPdf').onclick=()=>pdfManut(S.chip?manutMesCod(S.chip):hoje().slice(0,7));
+  $('#rMail').onclick=()=>emailManut(S.chip?manutMesCod(S.chip):hoje().slice(0,7));
   V.onclick=e=>{
     const t=e.target.closest('[data-ma]');if(t){S.mAba=t.dataset.ma;S.lim=40;render();return;}
     const c=e.target.closest('[data-h]');if(!c)return;const r=a.linhas[+c.dataset.h];
