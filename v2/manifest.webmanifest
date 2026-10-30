@@ -1,7 +1,7 @@
 {
-  "name": "Mel.B System 2 (integrado)",
-  "short_name": "Mel.B System 2",
-  "description": "Mel.B System integrado com a planilha elétrica da planta nova – equipamentos por Setor/TAG.",
+  "name": "PCM 2 (integrado)",
+  "short_name": "PCM 2",
+  "description": "PCM integrado com a planilha elétrica da planta nova – equipamentos por Setor/TAG.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
